@@ -76,7 +76,14 @@
   @media (max-width: 880px) { .grid-2, .grid-halves { grid-template-columns: 1fr; } }
   .stack > * + * { margin-top: 16px; }
 
-  .callouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
+  .callouts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px 32px; margin: 24px 0; }
+  .controls.seg { gap: 0; margin: 4px 0 8px; }
+  .seg button { border-radius: 0; margin-left: -1px; }
+  .seg button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+  .seg button:last-child { border-radius: 0 6px 6px 0; }
+  .seg button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); position: relative; }
+  .side .demo { font-size: 13px; color: var(--text-secondary); margin: 8px 0 0; }
+  .side .demo b { color: var(--text-primary); font-weight: 600; }
   @media (max-width: 720px) { .callouts { grid-template-columns: 1fr; } }
   .callout { border-left: 3px solid var(--border); padding: 2px 0 2px 14px; }
   .callout h4 { margin: 0 0 4px; font-size: 15px; }
@@ -113,6 +120,18 @@
   .race .lbl b { color: var(--text-primary); font-weight: 600; }
   .race .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); }
   .race .val small { color: var(--text-muted); font-size: 11px; margin-left: 4px; }
+  .race .mv { font-size: 10px; color: var(--text-secondary); margin-right: 6px; }
+  .map-label.minor { font-size: 9.5px; font-weight: 500; }
+  .pulse-ring { fill: none; stroke: var(--pulse); }
+  .precinct.event { stroke: var(--text-primary); stroke-width: 2.5; stroke-dasharray: 4 2; }
+  .clock .event {
+    margin-top: 10px; max-width: 250px; font-size: 13px; line-height: 1.4; color: var(--text-primary);
+    border-left: 3px solid var(--pulse); padding: 2px 0 2px 10px; background: var(--surface-1);
+  }
+  .tl-event line { stroke: var(--text-muted); stroke-dasharray: 2 2; }
+  .tl-event text { font-size: 10px; fill: var(--text-secondary); }
+  .tl-event.active text { fill: var(--text-primary); font-weight: 600; }
+  .tl-event.active line { stroke: var(--text-primary); stroke-dasharray: none; }
   .race .track { grid-column: 1 / -1; height: 6px; background: var(--surface-0); border-radius: 3px; overflow: hidden; align-self: center; }
   .race .fill { height: 100%; border-radius: 3px; background: var(--pulse); }
   .map-label { font-size: 11px; font-weight: 600; fill: var(--text-primary); paint-order: stroke; stroke: var(--surface-1); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
@@ -172,7 +191,7 @@
     <div class="act-head">
       <div class="act-num">1 · Where</div>
       <h2>A handful of neighborhoods carry most of the complaints</h2>
-      <p>Each precinct is shaded by its <strong>share of all complaints filed since January 2000</strong>. Press play to add up the 20 years month by month. The early months jump around, but the ranking settles quickly, and the same places stay on top: <strong>East New York, Brownsville, and Bed-Stuy in Brooklyn, and the South and West Bronx</strong>.</p>
+      <p>Each precinct is shaded by its <strong>share of all complaints filed since January 2000</strong>. Press play to add up the 20 years month by month. Rings pulse wherever complaints arrive that month, and notes on the timeline mark turning points in NYPD policing. The early months jump around, but the ranking settles quickly, and the same places stay on top: <strong>East New York, Brownsville, and Bed-Stuy in Brooklyn, and the South and West Bronx</strong>.</p>
     </div>
 
     <div class="controls">
@@ -186,7 +205,7 @@
 
     <div class="grid-2">
       <div class="card map-wrap">
-        <div class="clock"><div class="month" id="clock-month">—</div><div class="count" id="clock-count"></div></div>
+        <div class="clock"><div class="month" id="clock-month">—</div><div class="count" id="clock-count"></div><div class="event" id="clock-event" style="display:none"></div></div>
         <svg id="map1" role="img" aria-label="Map of NYC precincts shaded by their share of complaints since 2000"></svg>
         <div class="legend" id="legend1"></div>
         <svg id="timeline" role="img" aria-label="Complaints received per month, 2000–2019" style="margin-top:12px"></svg>
@@ -234,6 +253,7 @@
         <h3 id="side-title">—</h3>
         <p class="sub" id="side-sub"></p>
         <div class="bignum" id="side-rate">—</div>
+        <p class="demo" id="side-demo"></p>
         <h4>Findings</h4>
         <div class="stackbar" id="side-stack"></div>
         <div class="legend" id="side-stack-legend"></div>
@@ -248,23 +268,26 @@
     <div class="act-head">
       <div class="act-num">3 · Why might this be?</div>
       <h2>The busier the precinct, the lower the odds a complaint is upheld</h2>
-      <p>Each dot below is a precinct. Precincts with more complaints tend to have <em>lower</em> substantiation rates. The correlation is <strong id="r-val">—</strong>. This dataset can't prove why, but it can rule some explanations out and point toward others.</p>
+      <p>Each dot below is a precinct. Precincts with more complaints tend to have <em>lower</em> substantiation rates. The correlation is <strong id="r-val">—</strong>. Switch the x-axis to check whether that's just bigger precincts having more people (it isn't), and to see how it lines up with neighborhood income. This dataset can't prove why, but it can rule some explanations out and point toward others.</p>
     </div>
 
     <div class="grid-halves">
       <div class="card">
-        <h3 class="fig-title">Complaint volume vs. substantiation rate</h3>
+        <h3 class="fig-title" id="sc-title">Complaint volume vs. substantiation rate</h3>
         <p class="fig-sub">One dot per precinct with ≥ 100 allegations · hover links to the map above</p>
-        <svg id="scatter" role="img" aria-label="Scatter plot of precinct complaint volume against substantiation rate"></svg>
+        <div class="controls seg" id="sc-mode" role="group" aria-label="Scatter x-axis"></div>
+        <svg id="scatter" role="img" aria-label="Scatter plot of a precinct measure against substantiation rate"></svg>
       </div>
       <div class="card">
-        <h3 class="fig-title">Busiest vs. quietest precincts</h3>
-        <p class="fig-sub">The quarter of precincts with the most complaints vs. the quarter with the fewest</p>
-        <svg id="dumbbell" role="img" aria-label="Comparison of busiest and quietest precinct quartiles on three measures"></svg>
+        <h3 class="fig-title" id="db-title">Busiest vs. quietest precincts</h3>
+        <p class="fig-sub" id="db-sub">The quarter of precincts with the most complaints vs. the quarter with the fewest</p>
+        <div class="controls seg" id="db-mode" role="group" aria-label="Group precincts by"></div>
+        <svg id="dumbbell" role="img" aria-label="Comparison of two precinct quartiles on three measures"></svg>
         <div class="legend">
-          <span><span class="sw round" style="background:var(--text-primary)"></span>Busiest quarter</span>
-          <span><span class="sw round" style="background:var(--surface-1);box-shadow:inset 0 0 0 1.5px var(--text-primary)"></span>Quietest quarter</span>
+          <span><span class="sw round" style="background:var(--text-primary)"></span><span id="db-leg-a">Busiest quarter</span></span>
+          <span><span class="sw round" style="background:var(--surface-1);box-shadow:inset 0 0 0 1.5px var(--text-primary)"></span><span id="db-leg-b">Quietest quarter</span></span>
         </div>
+        <p class="fig-sub" id="db-note" style="margin-top:8px"></p>
       </div>
     </div>
 
@@ -278,6 +301,10 @@
         <p id="why-race">—</p>
       </div>
       <div class="callout">
+        <h4>Neighborhood income</h4>
+        <p id="why-income">—</p>
+      </div>
+      <div class="callout">
         <h4>What we can't see yet: policing intensity</h4>
         <p>Precincts that get more stops and searches have more encounters that end in disputed accounts, often with no witnesses or video. The CCRB can't substantiate those. Testing this means joining per-precinct stop and arrest counts, which this dataset doesn't include.</p>
       </div>
@@ -287,7 +314,7 @@
   <section class="takeaway">
     <div class="act-num">Takeaway</div>
     <h2>The neighborhoods that complain the most get the least resolution</h2>
-    <p>Complaints are concentrated in a few predominantly Black and Latino precincts. Allegations from those precincts are <strong id="t-gap">—</strong> less likely to be substantiated than allegations from the city's quietest precincts. The type of allegation doesn't explain the gap. A New Yorker's chance of having a complaint upheld seems to depend partly on where they live.</p>
+    <p>Complaints are concentrated in a few predominantly Black and Latino precincts. Allegations from those precincts are <strong id="t-gap">—</strong> less likely to be substantiated than allegations from the city's quietest precincts. The type of allegation doesn't explain the gap. Income follows the same pattern: <span id="t-income"></span> A New Yorker's chance of having a complaint upheld seems to depend partly on where they live.</p>
   </section>
 
   <section class="act" style="margin-top:48px">
@@ -297,7 +324,8 @@
       <li><strong>This is not every complaint.</strong> The release only covers officers who were still on the force in 2020 and had at least one substantiated allegation. That pushes the substantiation rates here above the CCRB's true overall rate, so compare precincts with each other, not with outside figures.</li>
       <li><strong>Units:</strong> a complaint can include several allegations against several officers. Act 1 counts complaints. Acts 2 and 3 count allegations, since the CCRB rules on each one separately.</li>
       <li><strong>Location and time:</strong> the data only records the precinct and the month received, so Act 1 adds up complaints by precinct and month.</li>
-      <li>Counts are raw, not adjusted for population. Precincts with fewer than 100 allegations are grayed out in Act 2 and left out of Act 3, because their rates are too noisy.</li>
+      <li><strong>Income and population</strong> come from the Census Bureau's <a href="https://censusreporter.org/tables/B19001/">American Community Survey, 2020–2024 5-year estimates</a> (tables B19001 and B01003). Census tracts don't line up with precincts, so each tract is assigned to the precinct that contains its center point. Income bracket counts are summed per precinct and the median is estimated from the combined distribution, top-coded at $200k. These figures postdate the complaints (2000–2019), and some neighborhoods have gentrified since, so treat income as a rough, present-day picture.</li>
+      <li>Act 1 and Act 2 use raw counts. "Per resident" figures in Act 3 divide by the precinct's residential population, which understates how many people pass through commercial areas like Midtown. Precincts with fewer than 100 allegations are grayed out in Act 2 and left out of Act 3, because their rates are too noisy.</li>
     </ul>
     <p id="status" class="notes"></p>
   </section>
@@ -319,16 +347,27 @@
     { key: "Unsubstantiated", color: "--unsub" },
   ];
   const BORO = p => p <= 34 ? "Manhattan" : p <= 52 ? "Bronx" : p <= 94 ? "Brooklyn" : p <= 115 ? "Queens" : "Staten Island";
-  // Neighborhood names for precincts we call out (annotation only).
+  // Short neighborhood name for every precinct (the main neighborhood each covers; many span several).
   const HOOD = {
-    75: "East New York", 73: "Brownsville", 44: "Grand Concourse", 46: "Fordham", 67: "East Flatbush",
-    79: "Bed-Stuy", 40: "Mott Haven", 47: "Wakefield", 77: "Crown Heights", 120: "St. George",
-    5: "Chinatown", 1: "Lower Manhattan", 19: "Upper East Side", 84: "Downtown Brooklyn", 110: "Elmhurst",
-    45: "Throgs Neck", 70: "Midwood", 28: "Central Harlem", 9: "East Village", 100: "Rockaways",
-    30: "Hamilton Heights", 32: "Harlem", 23: "East Harlem", 25: "East Harlem", 33: "Washington Heights", 34: "Inwood",
-    14: "Midtown South", 18: "Midtown North", 41: "Hunts Point", 42: "Morrisania", 43: "Soundview", 48: "Belmont", 52: "Bedford Park",
-    60: "Coney Island", 69: "Canarsie", 71: "Prospect Lefferts", 81: "Ocean Hill", 83: "Bushwick", 90: "Williamsburg",
-    101: "Far Rockaway", 103: "Jamaica", 113: "South Jamaica", 114: "Astoria", 115: "Jackson Heights", 121: "Port Richmond",
+    // Manhattan
+    1: "Lower Manhattan", 5: "Chinatown", 6: "West Village", 7: "Lower East Side", 9: "East Village", 10: "Chelsea",
+    13: "Gramercy", 14: "Midtown South", 17: "Midtown East", 18: "Midtown North", 19: "Upper East Side", 20: "Upper West Side",
+    22: "Central Park", 23: "East Harlem", 24: "Manhattan Valley", 25: "East Harlem North", 26: "Morningside Heights",
+    28: "Central Harlem", 30: "Hamilton Heights", 32: "Harlem", 33: "Washington Heights", 34: "Inwood",
+    // Bronx
+    40: "Mott Haven", 41: "Hunts Point", 42: "Morrisania", 43: "Soundview", 44: "Grand Concourse", 45: "Throgs Neck",
+    46: "Fordham", 47: "Wakefield", 48: "Belmont", 49: "Morris Park", 50: "Riverdale", 52: "Bedford Park",
+    // Brooklyn
+    60: "Coney Island", 61: "Sheepshead Bay", 62: "Bensonhurst", 63: "Flatlands", 66: "Borough Park", 67: "East Flatbush",
+    68: "Bay Ridge", 69: "Canarsie", 70: "Midwood", 71: "Prospect Lefferts", 72: "Sunset Park", 73: "Brownsville",
+    75: "East New York", 76: "Red Hook", 77: "Crown Heights", 78: "Park Slope", 79: "Bed-Stuy", 81: "Ocean Hill",
+    83: "Bushwick", 84: "Downtown Brooklyn", 88: "Fort Greene", 90: "Williamsburg", 94: "Greenpoint",
+    // Queens
+    100: "Rockaways", 101: "Far Rockaway", 102: "Richmond Hill", 103: "Jamaica", 104: "Ridgewood", 105: "Queens Village",
+    106: "Ozone Park", 107: "Fresh Meadows", 108: "Long Island City", 109: "Flushing", 110: "Elmhurst", 111: "Bayside",
+    112: "Forest Hills", 113: "South Jamaica", 114: "Astoria", 115: "Jackson Heights",
+    // Staten Island
+    120: "St. George", 121: "Port Richmond", 122: "New Dorp", 123: "Tottenville",
   };
   const pname = p => HOOD[p] ? `Precinct ${p} · ${HOOD[p]}` : `Precinct ${p}`;
 
@@ -340,9 +379,11 @@
   const K0 = mkey(START), K1 = mkey(END);
 
   // ================= load =================
-  let geo, rows;
+  let geo, rows, incomeRows;
   try {
-    [geo, rows] = await Promise.all([d3.json("data/precincts.geojson"), d3.csv("data/allegations.csv")]);
+    [geo, rows, incomeRows] = await Promise.all([
+      d3.json("data/precincts.geojson"), d3.csv("data/allegations.csv"), d3.csv("data/precinct_income.csv", d3.autoType),
+    ]);
   } catch (e) {
     document.getElementById("status").innerHTML = `<span class="error">Couldn't load the data/ files. Serve this folder over HTTP (for example, <code>python -m http.server</code>) instead of opening the file directly.</span>`;
     return;
@@ -389,15 +430,29 @@
     });
   }
 
-  const reliable = [...stats.values()].filter(s => s.n >= MIN_N);
+  // Census layer: median household income + population per precinct (ACS tracts aggregated by tract center point)
+  const YEARS = 20;
+  for (const r of incomeRows) {
+    const s = stats.get(r.precinct);
+    if (!s) continue;
+    s.pop = r.population;
+    s.income = r.median_income || null;
+    s.per10k = r.population > 0 ? s.complaints / r.population * 10000 / YEARS : null;  // complaints per 10k residents per year
+  }
+
+  const reliable = [...stats.values()].filter(s => s.n >= MIN_N && s.income && s.per10k);
   const byVol = [...reliable].sort((a, b) => b.complaints - a.complaints);
   const q = Math.floor(byVol.length / 4);
-  const busiest = byVol.slice(0, q), quietest = byVol.slice(-q);
   const pool = (grp, f) => d3.sum(grp, s => f(s) * s.n) / d3.sum(grp, s => s.n);   // allegation-weighted
-  const G = {
-    busy: { rate: pool(busiest, s => s.rate), force: pool(busiest, s => s.force), black: pool(busiest, s => s.black), expected: pool(busiest, s => s.expected) },
-    quiet: { rate: pool(quietest, s => s.rate), force: pool(quietest, s => s.force), black: pool(quietest, s => s.black), expected: pool(quietest, s => s.expected) },
-  };
+  const summarize = grp => ({
+    rate: pool(grp, s => s.rate), force: pool(grp, s => s.force), black: pool(grp, s => s.black), expected: pool(grp, s => s.expected),
+    per10k: d3.sum(grp, s => s.complaints) / d3.sum(grp, s => s.pop) * 10000 / YEARS,
+    incLo: d3.min(grp, s => s.income), incHi: d3.max(grp, s => s.income), size: grp.length,
+  });
+  // Two ways to split precincts into quarters: by complaint volume, and by median income.
+  const G = { busy: summarize(byVol.slice(0, q)), quiet: summarize(byVol.slice(-q)) };
+  const byInc = [...reliable].sort((a, b) => a.income - b.income);
+  const GI = { poor: summarize(byInc.slice(0, q)), rich: summarize(byInc.slice(-q)) };
   const corr = (xs, ys) => {
     const mx = d3.mean(xs), my = d3.mean(ys);
     const num = d3.sum(xs, (x, i) => (x - mx) * (ys[i] - my));
@@ -415,6 +470,9 @@
   d3.select("#why-mix").html(`If the busiest precincts just had more force allegations, which are rarely upheld, that could explain the gap. They don't. Force makes up <b>${pct(G.busy.force)}</b> of allegations in the busiest quarter and <b>${pct(G.quiet.force)}</b> in the quietest. Based on allegation type alone, both groups would be expected to land near <b>${pct(G.busy.expected)}</b> substantiated.`);
   d3.select("#why-race").html(`<b>${pct(G.busy.black)}</b> of allegations in the busiest precincts come from Black complainants, vs. <b>${pct(G.quiet.black)}</b> in the quietest. Citywide, allegations from Black complainants are substantiated less often than those from white complainants (<b>${pct(rateBy("Black"))}</b> vs. <b>${pct(rateBy("White"))}</b>).`);
   d3.select("#t-gap").text(`${pct(1 - G.busy.rate / G.quiet.rate)}`);
+  const usd = v => v >= 200000 ? "$200k+" : "$" + Math.round(v / 1000) + "k";
+  d3.select("#why-income").html(`The poorest quarter of precincts (median household income ${usd(GI.poor.incLo)}–${usd(GI.poor.incHi)}) file <b>${(GI.poor.per10k / GI.rich.per10k).toFixed(1)}×</b> as many complaints per resident as the richest quarter (${usd(GI.rich.incLo)}+). Their allegations are also upheld less often: <b>${pct(GI.poor.rate)}</b> vs. <b>${pct(GI.rich.rate)}</b>.`);
+  d3.select("#t-income").html(`The poorest precincts file ${(GI.poor.per10k / GI.rich.per10k).toFixed(1)}× as many complaints per resident as the richest, and get fewer of them upheld.`);
   function rateBy(race) { const as = alleg.filter(a => a.compRace === race); return as.filter(a => a.outcome === "Substantiated").length / as.length; }
 
   // ================= shared: tooltip + linked highlight =================
@@ -435,12 +493,38 @@
   const MW = 760, MH = 760;
   const projection = d3.geoMercator().fitExtent([[10, 70], [MW - 10, MH - 10]], geo);
   const path = d3.geoPath(projection);
-  // label anchor per precinct; a few neighbors get nudged apart so their labels don't collide
-  const NUDGE = { 73: [8, -12], 75: [30, 14], 77: [-46, 10], 1: [-34, 10], 5: [16, -10] };
+  // Anchor per precinct = centroid of its largest polygon (so island fragments don't drag it into the water).
   const centroid = new Map(geo.features.map(f => {
-    const p = +f.properties.precinct, [x, y] = path.centroid(f), [nx, ny] = NUDGE[p] || [0, 0];
-    return [p, [x + nx, y + ny]];
+    let g = f.geometry;
+    if (g.type === "MultiPolygon") {
+      const parts = g.coordinates.map(c => ({ type: "Polygon", coordinates: c }));
+      g = parts.reduce((a, b) => path.area(b) > path.area(a) ? b : a);
+    }
+    return [+f.properties.precinct, path.centroid(g)];
   }));
+
+  // Greedy label placement: items arrive in priority order; each tries its anchor, then just above / below,
+  // and is hidden if every spot collides with a label already placed. Keeps maps legible at any density.
+  function placeLabels(g, items, max = Infinity) {
+    const placed = [];
+    g.selectAll("text").data(items, d => d.p).join("text")
+      .attr("class", d => "map-label" + (d.minor ? " minor" : ""))
+      .attr("text-anchor", "middle")
+      .text(d => d.text)
+      .each(function (d) {
+        this.style.display = null;
+        const [cx, cy] = centroid.get(d.p);
+        let ok = false;
+        if (placed.length < max) for (const dy of [4, -9, 17]) {
+          this.setAttribute("x", cx); this.setAttribute("y", cy + dy);
+          const b = this.getBBox();
+          const box = { x0: b.x - 2, y0: b.y, x1: b.x + b.width + 2, y1: b.y + b.height };
+          if (box.x0 < 0 || box.x1 > MW) continue;
+          if (!placed.some(o => box.x0 < o.x1 && box.x1 > o.x0 && box.y0 < o.y1 && box.y1 > o.y0)) { placed.push(box); ok = true; break; }
+        }
+        if (!ok) this.style.display = "none";
+      });
+  }
 
   // =====================================================================
   // ACT 1 — running total: each precinct's share of complaints since Jan 2000
@@ -484,7 +568,18 @@
         : `<span class="muted">No complaints yet</span>`));
     })
     .on("mouseleave", () => { highlight(null); hideTip(); });
+  const pulses = map1.append("g").style("pointer-events", "none");
   const labels1 = map1.append("g");
+
+  // Context for the timeline. Facts about policing, not claims drawn from this dataset.
+  const EVENTS = [
+    { date: new Date(2011, 0, 1), span: 12, short: "Stop-and-frisk peaks", when: "2011",
+      text: "NYPD stop-and-frisk peaks at about 686,000 stops in one year, mostly of Black and Latino New Yorkers." },
+    { date: new Date(2013, 7, 1), span: 10, short: "Floyd ruling", when: "Aug 2013",
+      text: "In <i>Floyd v. City of New York</i>, a federal judge rules the NYPD's stop-and-frisk practices unconstitutional." },
+    { date: new Date(2014, 6, 1), span: 12, short: "Eric Garner", p: 120, when: "July 2014",
+      text: "Eric Garner dies after an officer puts him in a chokehold on Staten Island, in the 120th Precinct (outlined)." },
+  ].map(e => ({ ...e, k: mkey(e.date) }));
 
   function render1(dur = 0) {
     const { total } = at(act1.cursor);
@@ -494,16 +589,31 @@
     p1.transition("fill").duration(dur).ease(d3.easeLinear)
       .attr("fill", f => fill(shareOf.get(+f.properties.precinct) || 0));
 
-    // label whichever precincts are currently the top 5
-    labels1.selectAll("text").data(ranked.slice(0, 5), d => d.p).join("text")
-      .attr("class", "map-label").attr("text-anchor", "middle")
-      .attr("x", d => centroid.get(d.p)[0]).attr("y", d => centroid.get(d.p)[1])
-      .text(d => HOOD[d.p] || d.p);
+    // label the current leaders (top 5 prominent, the rest smaller), as many as fit
+    placeLabels(labels1, ranked.slice(0, 16).map((d, i) => ({ p: d.p, text: HOOD[d.p], minor: i >= 5 })), 14);
+
+    // pulse: while playing, a ring at each precinct sized by the complaints it received this month
+    if (dur > 0) {
+      for (const [p, n] of d3.rollup(byMonth.get(act1.cursor) || [], v => v.length, c => c.precinct)) {
+        const [cx, cy] = centroid.get(p);
+        pulses.append("circle").attr("class", "pulse-ring").attr("cx", cx).attr("cy", cy).attr("r", 2)
+          .attr("stroke-width", 2).attr("opacity", 0.9)
+          .transition().duration(1500).ease(d3.easeCubicOut)
+          .attr("r", 5 + 6 * Math.sqrt(n)).attr("opacity", 0).remove();
+      }
+    }
+
+    // story beats: caption + outline the precinct involved while the cursor is inside the event window
+    const ev = EVENTS.find(e => act1.cursor >= e.k && act1.cursor < e.k + e.span);
+    d3.select("#clock-event").style("display", ev ? null : "none").html(ev ? `<b>${ev.when}.</b> ${ev.text}` : "");
+    p1.classed("event", f => !!(ev && ev.p === +f.properties.precinct));
+    tEvents.classed("active", e => e === ev);
 
     d3.select("#clock-month").text(fmtMonth(kdate(act1.cursor)));
     d3.select("#clock-count").text(`${total.toLocaleString()} complaints since Jan 2000`);
     d3.select("#legend1").html(
-      `<span>Share of all complaints since Jan 2000: 0%<span class="ramp" style="background:linear-gradient(to right,var(--share-lo),var(--share-hi))"></span>${pct(shareMax, 1)}+</span>`
+      `<span>Share of all complaints since Jan 2000: 0%<span class="ramp" style="background:linear-gradient(to right,var(--share-lo),var(--share-hi))"></span>${pct(shareMax, 1)}+</span>` +
+      `<span><span class="sw round" style="background:transparent;box-shadow:inset 0 0 0 2px var(--pulse)"></span>Ring = complaints received that month (bigger = more)</span>`
     );
     renderRace(ranked, total, dur);
     moveCursor();
@@ -511,10 +621,19 @@
 
   // ---- running-total ranking (top 10) ----
   const N_RACE = 10, ROW_H = 40;
+  let prevRank = new Map();
+  const moves = new Map();
   const race = d3.select("#top10").style("height", `${N_RACE * ROW_H}px`);
   function renderRace(ranked, total, dur) {
     const top = ranked.slice(0, N_RACE);
     const w = s => Math.min(1, s / shareMax) * 100;
+    // remember rank changes during playback so rows can show ▲/▼ for a few months afterward
+    if (dur > 0) for (const d of top) {
+      const prev = prevRank.get(d.p);
+      if (prev !== undefined && prev !== d.rank) moves.set(d.p, { up: prev > d.rank, k: act1.cursor });
+    } else moves.clear();
+    prevRank = new Map(ranked.map(d => [d.p, d.rank]));
+    const mv = d => { const m = moves.get(d.p); return m && act1.cursor - m.k < 8 && act1.cursor >= m.k ? `<span class="mv">${m.up ? "▲" : "▼"}</span>` : ""; };
     // Rows mid-exit are excluded so a precinct that re-enters quickly gets a fresh row
     // instead of reusing one whose exit animation is still running.
     race.selectAll(".row:not(.exiting)").data(top, d => d.p).join(
@@ -528,7 +647,7 @@
       exit => exit.classed("exiting", true).interrupt("pos")
         .transition("exit").duration(dur).style("top", `${N_RACE * ROW_H}px`).style("opacity", 0).remove()
     ).call(sel => {
-      sel.select(".val").html(d => `${pct(d.share, 1)}<small>${d.n.toLocaleString()}</small>`);
+      sel.select(".val").html(d => `${mv(d)}${pct(d.share, 1)}<small>${d.n.toLocaleString()}</small>`);
       sel.transition("pos").duration(dur).ease(d3.easeLinear)
         .style("top", (d, i) => `${i * ROW_H}px`).style("opacity", 1);
       sel.select(".fill").transition("w").duration(dur).ease(d3.easeLinear).style("width", d => `${w(d.share)}%`);
@@ -539,7 +658,7 @@
   }
 
   // ---- Act 1 timeline (monthly counts; shaded = months included in the running total) ----
-  const TW = 760, TH = 110, tm = { t: 8, r: 8, b: 22, l: 34 };
+  const TW = 760, TH = 132, tm = { t: 30, r: 8, b: 22, l: 34 };
   const tl = d3.select("#timeline").attr("viewBox", `0 0 ${TW} ${TH}`);
   const tx = d3.scaleTime().domain([START, END]).range([tm.l, TW - tm.r]);
   const ty = d3.scaleLinear().range([TH - tm.b, tm.t]);
@@ -550,6 +669,11 @@
   const tClip = tl.append("clipPath").attr("id", clipId).append("rect").attr("x", tm.l).attr("y", 0).attr("height", TH);
   const tArea = tl.append("path").attr("clip-path", `url(#${clipId})`).attr("fill-opacity", 0.18);
   const tLine = tl.append("path").attr("fill", "none").attr("stroke-width", 2);
+  // event markers: a thin rule from the label down to the axis; labels alternate heights so neighbors don't collide
+  const tEvents = tl.append("g").selectAll("g").data(EVENTS).join("g")
+    .attr("class", "tl-event").attr("transform", e => `translate(${tx(e.date)},0)`);
+  tEvents.append("line").attr("y1", (e, i) => i % 2 ? 18 : 8).attr("y2", TH - tm.b);
+  tEvents.append("text").attr("y", (e, i) => i % 2 ? 16 : 6).attr("text-anchor", "middle").text(e => e.short);
   const tCur = tl.append("line").attr("y1", tm.t).attr("y2", TH - tm.b).attr("stroke-width", 1.5);
   const tDot = tl.append("circle").attr("r", 4).attr("stroke-width", 2);
   const tHit = tl.append("rect").attr("x", tm.l).attr("width", TW - tm.l - tm.r).attr("height", TH).attr("fill", "transparent").style("cursor", "ew-resize");
@@ -657,7 +781,7 @@
       const p = +f.properties.precinct, s = stats.get(p);
       highlight(p); showSide(p);
       showTip(ev, s && s.n >= MIN_N
-        ? `<b>${pname(p)}</b><br>${pct(s.rate, 1)} substantiated <span class="muted">(city ${pct(cityRate, 1)})</span><br><span class="muted">${s.n.toLocaleString()} allegations</span>`
+        ? `<b>${pname(p)}</b><br>${pct(s.rate, 1)} substantiated <span class="muted">(city ${pct(cityRate, 1)})</span><br><span class="muted">${s.n.toLocaleString()} allegations${s.income ? ` · median income ${usd(s.income)}` : ""}</span>`
         : `<b>${pname(p)}</b><br><span class="muted">Too few allegations to rate (${s ? s.n : 0})</span>`);
     })
     .on("mouseleave", () => { highlight(null); showSide(pinned); hideTip(); })
@@ -670,10 +794,12 @@
       .domain([cityRate - span, cityRate, cityRate + span])
       .interpolator(t => t < 0.5 ? d3.interpolateRgb(css("--div-lo"), css("--div-mid"))(t * 2) : d3.interpolateRgb(css("--div-mid"), css("--div-hi"))((t - 0.5) * 2));
     p2.attr("fill", f => { const s = stats.get(+f.properties.precinct); return s && s.n >= MIN_N ? divScale(s.rate) : css("--nodata"); });
-    const callouts = [byVol[0], ...[...reliable].sort((a, b) => b.rate - a.rate).slice(0, 2)];
-    labels2.selectAll("text").data(callouts).join("text").attr("class", "map-label").attr("text-anchor", "middle")
-      .attr("x", s => centroid.get(s.p)[0]).attr("y", s => centroid.get(s.p)[1])
-      .text(s => `${HOOD[s.p] || s.p} ${pct(s.rate)}`);
+    // Label the precincts that stray furthest from the city average (weighted by size so tiny precincts
+    // don't dominate), East New York first since the story keeps returning to it.
+    const notable = [...reliable].sort((a, b) => Math.abs(b.rate - cityRate) * Math.sqrt(b.n) - Math.abs(a.rate - cityRate) * Math.sqrt(a.n));
+    const items = [byVol[0], ...notable.filter(s => s !== byVol[0])]
+      .map((s, i) => ({ p: s.p, text: `${HOOD[s.p]} ${pct(s.rate)}`, minor: i >= 6 }));
+    placeLabels(labels2, items, 22);
     d3.select("#legend2").html(
       `<span>${pct(cityRate - span)}<span class="ramp" style="background:linear-gradient(to right,var(--div-lo),var(--div-mid),var(--div-hi))"></span>${pct(cityRate + span)}</span>` +
       `<span>Middle (gray) = city average, ${pct(cityRate, 1)}</span>` +
@@ -690,6 +816,10 @@
     d3.select("#side-sub").text(isCity ? `${n.toLocaleString()} allegations · hover or click a precinct` : `${BORO(p)} · ${n.toLocaleString()} allegations${pinned === p ? " · click again to unpin" : ""}`);
     const diff = rate - cityRate;
     d3.select("#side-rate").html(`${pct(rate)} <small>substantiated${isCity ? "" : ` · ${diff >= 0 ? "+" : "−"}${Math.abs(diff * 100).toFixed(1)} pts vs. city`}</small>`);
+    const sp = isCity ? null : stats.get(p);
+    d3.select("#side-demo").html(sp && sp.income
+      ? `Median household income <b>${usd(sp.income)}</b> · ${Math.round(sp.pop / 1000)}k residents · <b>${sp.per10k.toFixed(1)}</b> complaints per 10k residents a year`
+      : isCity ? `Citywide: <b>${(totalComplaints / d3.sum([...stats.values()], s => s.pop || 0) * 10000 / YEARS).toFixed(1)}</b> complaints per 10k residents a year` : "");
     d3.select("#side-stack").html(OUTCOMES.map(o => `<div style="width:${outc[o.key] / n * 100}%;background:var(${o.color})" title="${o.key}"></div>`).join(""));
     d3.select("#side-stack-legend").html(OUTCOMES.map(o => `<span><span class="sw" style="background:var(${o.color})"></span>${o.key} ${pct(outc[o.key] / n)}</span>`).join(""));
     const mx = top[0][1];
@@ -697,48 +827,92 @@
   }
 
   // =====================================================================
-  // ACT 3a — scatter: volume vs rate
+  // ACT 3a — scatter: a precinct measure (switchable) vs substantiation rate
   // =====================================================================
+  const SC_MODES = [
+    { key: "volume", btn: "Total complaints", get: s => s.complaints, title: "Complaint volume vs. substantiation rate",
+      axis: "Complaints, 2000–2019 (log scale) →", fmt: d3.format("~s"), tip: s => `${s.complaints.toLocaleString()} complaints` },
+    { key: "percap", btn: "Per resident", get: s => s.per10k, title: "Complaints per resident vs. substantiation rate",
+      axis: "Complaints per 10,000 residents per year (log scale) →", fmt: d3.format("~r"), tip: s => `${s.per10k.toFixed(1)} complaints per 10k residents a year` },
+    { key: "income", btn: "Median income", get: s => s.income, title: "Neighborhood income vs. substantiation rate",
+      axis: "Median household income, 2020–24 (log scale) →", fmt: v => "$" + d3.format("~s")(v), tip: s => `Median household income ${usd(s.income)}` },
+  ];
+  let scMode = SC_MODES[0];
   const SW = 560, SH = 400, sm = { t: 16, r: 16, b: 40, l: 46 };
   const sc = d3.select("#scatter").attr("viewBox", `0 0 ${SW} ${SH}`);
-  const sx = d3.scaleLog().domain(d3.extent(reliable, s => s.complaints)).nice().range([sm.l, SW - sm.r]);
+  const sx = d3.scaleLog().range([sm.l, SW - sm.r]);
   const sy = d3.scaleLinear().domain([0, d3.max(reliable, s => s.rate) * 1.1]).nice().range([SH - sm.b, sm.t]);
   sc.append("g").attr("class", "gridlines").attr("transform", `translate(${sm.l},0)`).call(d3.axisLeft(sy).ticks(5).tickSize(-(SW - sm.l - sm.r)).tickFormat(""));
-  sc.append("g").attr("class", "axis").attr("transform", `translate(0,${SH - sm.b})`).call(d3.axisBottom(sx).ticks(5, "~s").tickSizeOuter(0));
+  const sxAxis = sc.append("g").attr("class", "axis").attr("transform", `translate(0,${SH - sm.b})`);
   sc.append("g").attr("class", "axis").attr("transform", `translate(${sm.l},0)`).call(d3.axisLeft(sy).ticks(5).tickFormat(d3.format(".0%")).tickSizeOuter(0));
-  sc.append("text").attr("class", "anno").attr("x", (sm.l + SW - sm.r) / 2).attr("y", SH - 6).attr("text-anchor", "middle").text("Complaints, 2000–2019 (log scale) →");
+  const sxLabel = sc.append("text").attr("class", "anno").attr("x", (sm.l + SW - sm.r) / 2).attr("y", SH - 6).attr("text-anchor", "middle");
   sc.append("text").attr("class", "anno").attr("transform", `translate(12,${(sm.t + SH - sm.b) / 2}) rotate(-90)`).attr("text-anchor", "middle").text("Allegations substantiated");
-  // city average reference + regression line (rate ~ log volume)
   const cityLine = sc.append("line").attr("x1", sm.l).attr("x2", SW - sm.r).attr("y1", sy(cityRate)).attr("y2", sy(cityRate)).attr("stroke-dasharray", "4 3");
   sc.append("text").attr("class", "anno").attr("x", SW - sm.r).attr("y", sy(cityRate) - 5).attr("text-anchor", "end").text(`city avg ${pct(cityRate)}`);
-  const lx = reliable.map(s => Math.log10(s.complaints)), ly = reliable.map(s => s.rate);
-  const mlx = d3.mean(lx), mly = d3.mean(ly);
-  const slope = d3.sum(lx, (x, i) => (x - mlx) * (ly[i] - mly)) / d3.sum(lx, x => (x - mlx) ** 2);
-  const fit = c => mly + slope * (Math.log10(c) - mlx);
-  const [c0, c1] = sx.domain();
-  const trend = sc.append("line").attr("x1", sx(c0)).attr("y1", sy(fit(c0))).attr("x2", sx(c1)).attr("y2", sy(fit(c1))).attr("stroke-width", 2);
+  const trend = sc.append("line").attr("stroke-width", 2);
+  const trendLabel = sc.append("text").attr("class", "anno").attr("text-anchor", "end");
   const sDots = sc.append("g").selectAll("circle").data(reliable).join("circle")
-    .attr("cx", s => sx(s.complaints)).attr("cy", s => sy(s.rate)).attr("r", 5).attr("stroke-width", 1.5)
-    .style("cursor", "pointer")
-    .on("mousemove", (ev, s) => { highlight(s.p); showSide(s.p); showTip(ev, `<b>${pname(s.p)}</b><br>${s.complaints.toLocaleString()} complaints<br>${pct(s.rate, 1)} of allegations substantiated`); })
+    .attr("r", 5).attr("stroke-width", 1.5).style("cursor", "pointer")
+    .on("mousemove", (ev, s) => {
+      highlight(s.p); showSide(s.p);
+      showTip(ev, `<b>${pname(s.p)}</b><br>${pct(s.rate, 1)} of allegations substantiated<br><span class="muted">${s.complaints.toLocaleString()} complaints · ${s.per10k.toFixed(1)} per 10k residents/yr<br>Median household income ${usd(s.income)}</span>`);
+    })
     .on("mouseleave", () => { highlight(null); showSide(pinned); hideTip(); });
-  // label a few telling precincts
-  const sLabelled = [byVol[0], byVol[1], ...[...reliable].sort((a, b) => b.rate - a.rate).slice(0, 2)];
-  sc.append("g").selectAll("text").data(sLabelled).join("text").attr("class", "map-label").style("font-weight", 500)
-    .attr("x", s => sx(s.complaints) + (s.complaints > 1000 ? -8 : 8)).attr("y", s => sy(s.rate) + 4)
-    .attr("text-anchor", s => s.complaints > 1000 ? "end" : "start")
-    .text(s => HOOD[s.p] || `Pct ${s.p}`);
-  sc.append("text").attr("class", "anno").attr("x", sx(c1) - 4).attr("y", sy(fit(c1)) + 18).attr("text-anchor", "end").text(`trend, r = ${rVol.toFixed(2)}`);
+  const sLabels = sc.append("g");
 
-  function renderScatter() {
-    cityLine.attr("stroke", css("--text-muted"));
-    trend.attr("stroke", css("--div-lo"));
-    sDots.attr("fill", css("--sub")).attr("fill-opacity", 0.75).attr("stroke", css("--surface-1"));
+  // least-squares fit of rate on log10(x); r is the matching correlation
+  function fitFor(mode) {
+    const lx = reliable.map(s => Math.log10(mode.get(s))), ly = reliable.map(s => s.rate);
+    const mx = d3.mean(lx), my = d3.mean(ly);
+    const slope = d3.sum(lx, (x, i) => (x - mx) * (ly[i] - my)) / d3.sum(lx, x => (x - mx) ** 2);
+    return { f: v => my + slope * (Math.log10(v) - mx), r: corr(lx, ly) };
   }
 
+  function renderScatter(dur = 0) {
+    const m = scMode, { f, r } = fitFor(m);
+    const [lo, hi] = d3.extent(reliable, m.get);
+    sx.domain([lo / 1.12, hi * 1.12]);   // pad instead of .nice(): on a log scale nice() jumps to whole powers of ten
+    const [c0, c1] = sx.domain();
+    d3.select("#sc-title").text(m.title);
+    sxLabel.text(m.axis);
+    sxAxis.transition().duration(dur).call(d3.axisBottom(sx).ticks(5).tickFormat(v => {
+      // log axes get crowded; only label 1, 2, 5 × powers of ten
+      const lead = v / 10 ** Math.floor(Math.log10(v) + 1e-9);
+      return [1, 2, 5].some(k => Math.abs(lead - k) < 1e-6) ? m.fmt(v) : "";
+    }).tickSizeOuter(0));
+    cityLine.attr("stroke", css("--text-muted"));
+    trend.attr("stroke", css("--div-lo"))
+      .transition().duration(dur).attr("x1", sx(c0)).attr("y1", sy(f(c0))).attr("x2", sx(c1)).attr("y2", sy(f(c1)));
+    // fixed in the top-right corner so it never lands on a point label
+    trendLabel.text(`red line = trend, r = ${r.toFixed(2)}`).attr("x", SW - sm.r).attr("y", sm.t - 2);
+    sDots.attr("fill", css("--sub")).attr("fill-opacity", 0.75).attr("stroke", css("--surface-1"))
+      .transition().duration(dur).attr("cx", s => sx(m.get(s))).attr("cy", s => sy(s.rate));
+
+    // label the two extremes on x plus the two highest rates
+    const byX = [...reliable].sort((a, b) => m.get(b) - m.get(a));
+    const picks = [...new Set([byX[0], byX[byX.length - 1], ...[...reliable].sort((a, b) => b.rate - a.rate).slice(0, 2)])];
+    const mid = (sm.l + SW - sm.r) / 2;
+    sLabels.selectAll("text").data(picks, s => s.p).join("text")
+      .attr("class", "map-label").style("font-weight", 500)
+      .attr("text-anchor", s => sx(m.get(s)) > mid ? "end" : "start")
+      .transition().duration(dur)
+      .attr("x", s => sx(m.get(s)) + (sx(m.get(s)) > mid ? -9 : 9)).attr("y", s => sy(s.rate) + 4)
+      .text(s => HOOD[s.p]);
+  }
+  const scBtns = d3.select("#sc-mode").selectAll("button").data(SC_MODES).join("button")
+    .text(m => m.btn).attr("aria-pressed", m => m === scMode)
+    .on("click", (ev, m) => { scMode = m; scBtns.attr("aria-pressed", d => d === scMode); renderScatter(700); });
+
   // =====================================================================
-  // ACT 3b — dumbbell: busiest vs quietest quartile
+  // ACT 3b — dumbbell: compare two quarters of precincts (by volume or by income)
   // =====================================================================
+  const DB_MODES = [
+    { key: "volume", btn: "Complaint volume", a: G.busy, b: G.quiet, aName: "Busiest quarter", bName: "Quietest quarter",
+      title: "Busiest vs. quietest precincts", sub: "The quarter of precincts with the most complaints vs. the quarter with the fewest" },
+    { key: "income", btn: "Income", a: GI.poor, b: GI.rich, aName: "Poorest quarter", bName: "Richest quarter",
+      title: "Poorest vs. richest precincts", sub: "The quarter of precincts with the lowest median household income vs. the quarter with the highest" },
+  ];
+  let dbMode = DB_MODES[0];
   const DW = 560, DH = 260, dm = { t: 24, r: 24, b: 30, l: 170 };
   const db = d3.select("#dumbbell").attr("viewBox", `0 0 ${DW} ${DH}`);
   const measures = [
@@ -752,21 +926,31 @@
   db.append("g").attr("class", "axis").attr("transform", `translate(0,${DH - dm.b})`).call(d3.axisBottom(dx).ticks(4).tickFormat(d3.format(".0%")).tickSizeOuter(0));
   const dRows = db.append("g").selectAll("g").data(measures).join("g").attr("transform", m => `translate(0,${dy(m.label) + dy.bandwidth() / 2})`);
   dRows.append("text").attr("class", "val-label").attr("x", 0).attr("dy", "0.35em").text(m => m.label);
-  const dLine = dRows.append("line").attr("x1", m => dx(G.busy[m.key])).attr("x2", m => dx(G.quiet[m.key])).attr("stroke-width", 2);
-  const dBusy = dRows.append("circle").attr("cx", m => dx(G.busy[m.key])).attr("r", 6);
-  const dQuiet = dRows.append("circle").attr("cx", m => dx(G.quiet[m.key])).attr("r", 5.5).attr("stroke-width", 2);
-  // when the two values are close, show the busiest label above and the quietest below so they don't collide
-  const close = m => Math.abs(G.busy[m.key] - G.quiet[m.key]) < 0.05;
-  dRows.append("text").attr("class", "anno").attr("dy", -12).attr("text-anchor", "middle").attr("x", m => dx(G.busy[m.key])).text(m => pct(G.busy[m.key]));
-  dRows.append("text").attr("class", "anno").attr("dy", m => close(m) ? 22 : -12).attr("text-anchor", "middle").attr("x", m => dx(G.quiet[m.key])).text(m => pct(G.quiet[m.key]));
+  const dLine = dRows.append("line").attr("stroke-width", 2);
+  const dA = dRows.append("circle").attr("r", 6);
+  const dB = dRows.append("circle").attr("r", 5.5).attr("stroke-width", 2);
+  const dALabel = dRows.append("text").attr("class", "anno").attr("dy", -12).attr("text-anchor", "middle");
+  const dBLabel = dRows.append("text").attr("class", "anno").attr("text-anchor", "middle");
   dRows.append("rect").attr("x", dm.l).attr("y", -14).attr("width", DW - dm.l - dm.r).attr("height", 28).attr("fill", "transparent")
-    .on("mousemove", (ev, m) => showTip(ev, `<b>${m.label}</b><br>Busiest quarter: ${pct(G.busy[m.key], 1)}<br>Quietest quarter: ${pct(G.quiet[m.key], 1)}<br><span class="muted">${q} precincts in each group</span>`))
+    .on("mousemove", (ev, m) => showTip(ev, `<b>${m.label}</b><br>${dbMode.aName}: ${pct(dbMode.a[m.key], 1)}<br>${dbMode.bName}: ${pct(dbMode.b[m.key], 1)}<br><span class="muted">${q} precincts in each group</span>`))
     .on("mouseleave", hideTip);
-  function renderDumbbell() {
-    dLine.attr("stroke", css("--border"));
-    dBusy.attr("fill", css("--text-primary"));
-    dQuiet.attr("fill", css("--surface-1")).attr("stroke", css("--text-primary"));
+  function renderDumbbell(dur = 0) {
+    const { a, b } = dbMode;
+    d3.select("#db-title").text(dbMode.title);
+    d3.select("#db-sub").text(dbMode.sub);
+    d3.select("#db-leg-a").text(dbMode.aName);
+    d3.select("#db-leg-b").text(dbMode.bName);
+    d3.select("#db-note").html(`Complaints per 10,000 residents a year: <b style="color:var(--text-primary)">${a.per10k.toFixed(1)}</b> in the ${dbMode.aName.toLowerCase()} vs. <b style="color:var(--text-primary)">${b.per10k.toFixed(1)}</b> in the ${dbMode.bName.toLowerCase()}.`);
+    const close = m => Math.abs(a[m.key] - b[m.key]) < 0.05;   // stack labels above/below when the dots nearly touch
+    dLine.attr("stroke", css("--border")).transition().duration(dur).attr("x1", m => dx(a[m.key])).attr("x2", m => dx(b[m.key]));
+    dA.attr("fill", css("--text-primary")).transition().duration(dur).attr("cx", m => dx(a[m.key]));
+    dB.attr("fill", css("--surface-1")).attr("stroke", css("--text-primary")).transition().duration(dur).attr("cx", m => dx(b[m.key]));
+    dALabel.text(m => pct(a[m.key])).transition().duration(dur).attr("x", m => dx(a[m.key]));
+    dBLabel.text(m => pct(b[m.key])).transition().duration(dur).attr("x", m => dx(b[m.key])).attr("dy", m => close(m) ? 22 : -12);
   }
+  const dbBtns = d3.select("#db-mode").selectAll("button").data(DB_MODES).join("button")
+    .text(m => `By ${m.btn.toLowerCase()}`).attr("aria-pressed", m => m === dbMode)
+    .on("click", (ev, m) => { dbMode = m; dbBtns.attr("aria-pressed", d => d === dbMode); renderDumbbell(600); });
 
   // ---- link Act 2 map + Act 3 scatter ----
   hlListeners.push(p => {
