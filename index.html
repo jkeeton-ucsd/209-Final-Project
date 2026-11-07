@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Complaints Across NYC</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f4f3ef;
+    --surface-1: #fcfcfb;
+    --border: #dddcd5;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #7a7974;
+    /* Act 1: purple = share of complaints (single-hue sequential ramp, light to dark) */
+    --pulse: #6250d6;
+    --share-lo: #eeecfa;
+    --share-hi: #3b2d9c;
+    /* Acts 2-3: outcome colors, used consistently everywhere */
+    --sub: #2a78d6;        /* substantiated */
+    --exon: #eb6834;       /* exonerated */
+    --unsub: #b5b4ad;      /* unsubstantiated (neutral: CCRB couldn't decide) */
+    /* diverging: below city average (red) <-> gray <-> above (blue) */
+    --div-lo: #c8423f;
+    --div-mid: #f0efec;
+    --div-hi: #1c5cab;
+    --nodata: #e4e3dd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #121211; --surface-1: #1a1a19; --border: #34332f;
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+      --pulse: #9085e9; --share-lo: #262433; --share-hi: #b4acf4;
+      --sub: #3987e5; --exon: #d95926; --unsub: #5f5e58;
+      --div-lo: #e66767; --div-mid: #383835; --div-hi: #5598e7; --nodata: #262624;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #121211; --surface-1: #1a1a19; --border: #34332f;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+    --pulse: #9085e9; --share-lo: #262433; --share-hi: #b4acf4;
+    --sub: #3987e5; --exon: #d95926; --unsub: #5f5e58;
+    --div-lo: #e66767; --div-mid: #383835; --div-hi: #5598e7; --nodata: #262624;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--surface-0); color: var(--text-primary);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 48px 16px 80px; }
+  a { color: inherit; }
+
+  /* ---------- narrative ---------- */
+  header.hero { max-width: 760px; margin-bottom: 56px; }
+  .kicker { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin: 0 0 8px; }
+  h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.1; margin: 0 0 16px; letter-spacing: -0.02em; }
+  .hero p { font-size: 18px; color: var(--text-secondary); margin: 0 0 12px; }
+  .hero strong { color: var(--text-primary); }
+
+  section.act { margin: 72px 0; }
+  .act-head { max-width: 720px; margin-bottom: 20px; }
+  .act-num { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  h2 { font-size: clamp(24px, 3.4vw, 32px); line-height: 1.2; margin: 4px 0 12px; letter-spacing: -0.015em; }
+  .act-head p, .prose p { color: var(--text-secondary); margin: 0 0 12px; }
+  .act-head strong, .prose strong { color: var(--text-primary); }
+  h3.fig-title { font-size: 15px; margin: 0 0 2px; }
+  .fig-sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 12px; }
+
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  .grid-halves { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 880px) { .grid-2, .grid-halves { grid-template-columns: 1fr; } }
+  .stack > * + * { margin-top: 16px; }
+
+  .callouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
+  @media (max-width: 720px) { .callouts { grid-template-columns: 1fr; } }
+  .callout { border-left: 3px solid var(--border); padding: 2px 0 2px 14px; }
+  .callout h4 { margin: 0 0 4px; font-size: 15px; }
+  .callout p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+
+  .takeaway { max-width: 760px; font-size: 18px; }
+  .takeaway p { color: var(--text-secondary); }
+  .takeaway strong { color: var(--text-primary); }
+
+  /* ---------- controls ---------- */
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
+  .controls label { color: var(--text-secondary); font-size: 13px; display: flex; gap: 6px; align-items: center; }
+  button, select {
+    font: inherit; font-size: 13px; color: var(--text-primary); background: var(--surface-0);
+    border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; cursor: pointer;
+  }
+  button.primary { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); min-width: 72px; }
+  button[aria-pressed="false"].chip { opacity: 0.45; }
+  button[aria-pressed="true"].toggle { background: var(--text-primary); color: var(--surface-1); }
+
+  /* ---------- charts ---------- */
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .map-wrap { position: relative; }
+  .clock { position: absolute; left: 16px; top: 12px; pointer-events: none; font-variant-numeric: tabular-nums; }
+  .clock .month { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+  .clock .count { font-size: 13px; color: var(--text-secondary); }
+  .precinct { stroke: var(--surface-1); stroke-width: 0.6; cursor: pointer; }
+  .precinct.hl { stroke: var(--text-primary); stroke-width: 2; }
+  /* running-total ranking: rows are absolutely positioned so they can slide when ranks change */
+  .race { position: relative; }
+  .race .row { position: absolute; left: 0; right: 0; height: 38px; display: grid; grid-template-columns: 1fr auto; column-gap: 8px; font-size: 13px; padding: 2px 4px; border-radius: 6px; }
+  .race .row.hl { background: var(--surface-0); }
+  .race .lbl { color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .race .lbl b { color: var(--text-primary); font-weight: 600; }
+  .race .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+  .race .val small { color: var(--text-muted); font-size: 11px; margin-left: 4px; }
+  .race .track { grid-column: 1 / -1; height: 6px; background: var(--surface-0); border-radius: 3px; overflow: hidden; align-self: center; }
+  .race .fill { height: 100%; border-radius: 3px; background: var(--pulse); }
+  .map-label { font-size: 11px; font-weight: 600; fill: var(--text-primary); paint-order: stroke; stroke: var(--surface-1); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+  .axis text { fill: var(--text-muted); font-size: 11px; }
+  .axis path, .axis line { stroke: var(--border); }
+  .gridlines line { stroke: var(--border); stroke-dasharray: 2 3; }
+  .gridlines path { display: none; }
+  .anno { font-size: 12px; fill: var(--text-secondary); }
+  .anno-line { stroke: var(--text-muted); stroke-width: 1; fill: none; }
+  .val-label { font-size: 12px; fill: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--text-secondary); margin-top: 10px; align-items: center; }
+  .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+  .sw.round { border-radius: 50%; }
+  .ramp { width: 120px; height: 8px; border-radius: 2px; display: inline-block; vertical-align: middle; margin: 0 6px; }
+
+  /* ranked list / side panel bars */
+  .bars .row { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 13px; padding: 3px 4px; border-radius: 6px; cursor: default; }
+  .bars .row.hl { background: var(--surface-0); }
+  .bars .lbl { color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bars .lbl b { color: var(--text-primary); font-weight: 600; }
+  .bars .val { text-align: right; font-variant-numeric: tabular-nums; }
+  .bars .track { grid-column: 1 / -1; height: 6px; background: var(--surface-0); border-radius: 3px; overflow: hidden; }
+  .bars .fill { height: 100%; border-radius: 3px; background: var(--pulse); }
+  .side h3 { font-size: 16px; margin: 0 0 2px; }
+  .side .sub { color: var(--text-secondary); font-size: 13px; margin: 0 0 12px; }
+  .side h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 16px 0 6px; font-weight: 600; }
+  .stackbar { display: flex; gap: 2px; height: 14px; border-radius: 4px; overflow: hidden; }
+  .stackbar div { height: 100%; }
+  .bignum { font-size: 34px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .bignum small { font-size: 14px; font-weight: 400; color: var(--text-secondary); letter-spacing: 0; }
+
+  .tooltip {
+    position: fixed; pointer-events: none; z-index: 10; background: var(--surface-1); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 1.45;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.12); opacity: 0; transition: opacity 0.1s; max-width: 260px;
+  }
+  .tooltip .muted { color: var(--text-secondary); }
+
+  .notes { color: var(--text-secondary); font-size: 13px; max-width: 80ch; }
+  .notes li { margin-bottom: 6px; }
+  .error { color: var(--div-lo); }
+</style>
+</head>
+<body>
+<main>
+
+  <header class="hero">
+    <p class="kicker">NYPD civilian complaints, 2000–2019</p>
+    <h1>Where complaints pile up, they're less likely to stick</h1>
+    <p>Between 2000 and 2019, New Yorkers filed <strong id="h-total">—</strong> complaints with the Civilian Complaint Review Board (CCRB) against the officers in this dataset. They weren't spread evenly. <strong id="h-top10">—</strong> of them came from just 10 of the city's 77 precincts.</p>
+    <p>This page looks at three things: <strong>where</strong> complaints come from, <strong>what happened</strong> once they were filed, and <strong>why</strong> the outcome might depend on where you live.</p>
+  </header>
+
+  <!-- ============ ACT 1: WHERE ============ -->
+  <section class="act" id="act1">
+    <div class="act-head">
+      <div class="act-num">1 · Where</div>
+      <h2>A handful of neighborhoods carry most of the complaints</h2>
+      <p>Each precinct is shaded by its <strong>share of all complaints filed since January 2000</strong>. Press play to add up the 20 years month by month. The early months jump around, but the ranking settles quickly, and the same places stay on top: <strong>East New York, Brownsville, and Bed-Stuy in Brooklyn, and the South and West Bronx</strong>.</p>
+    </div>
+
+    <div class="controls">
+      <button id="play" class="primary">Play</button>
+      <label>Speed
+        <select id="speed"><option value="700">Slow</option><option value="300" selected>Normal</option><option value="120">Fast</option></select>
+      </label>
+      <span style="color:var(--text-secondary);font-size:13px">Show:</span>
+      <div id="chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card map-wrap">
+        <div class="clock"><div class="month" id="clock-month">—</div><div class="count" id="clock-count"></div></div>
+        <svg id="map1" role="img" aria-label="Map of NYC precincts shaded by their share of complaints since 2000"></svg>
+        <div class="legend" id="legend1"></div>
+        <svg id="timeline" role="img" aria-label="Complaints received per month, 2000–2019" style="margin-top:12px"></svg>
+      </div>
+      <div class="card">
+        <h3 class="fig-title">Top 10 precincts, running total</h3>
+        <p class="fig-sub" id="top10-sub">Share of complaints since Jan 2000 · hover to find on map</p>
+        <div class="race" id="top10"></div>
+        <p class="fig-sub" id="top10-note" style="margin-top:12px"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ACT 2: WHAT HAPPENED NEXT ============ -->
+  <section class="act" id="act2">
+    <div class="act-head">
+      <div class="act-num">2 · What happened next</div>
+      <h2>Most allegations are never substantiated, and force is the hardest to prove</h2>
+      <p>For each allegation the CCRB reaches one of three findings. <strong>Substantiated:</strong> the officer did it and it was misconduct. <strong>Exonerated:</strong> it happened but was within NYPD rules. <strong>Unsubstantiated:</strong> there wasn't enough evidence to decide.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 class="fig-title">CCRB findings by allegation type</h3>
+      <p class="fig-sub">Share of allegations, 2000–2019</p>
+      <svg id="outcomes" role="img" aria-label="Stacked bars of CCRB findings by allegation type"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--sub)"></span>Substantiated</span>
+        <span><span class="sw" style="background:var(--exon)"></span>Exonerated</span>
+        <span><span class="sw" style="background:var(--unsub)"></span>Unsubstantiated</span>
+      </div>
+    </div>
+
+    <div class="act-head prose">
+      <p>Now map the substantiation rate. If outcomes didn't depend on location, the map would be a flat gray. It isn't: <strong>red precincts have their allegations upheld less often than the city average</strong>, and many of them are the same precincts that lit up in Act 1.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3 class="fig-title">Substantiation rate vs. city average, by precinct</h3>
+        <p class="fig-sub">Share of allegations substantiated, 2000–2019 · hover or click a precinct</p>
+        <svg id="map2" role="img" aria-label="Map of substantiation rate by precinct relative to city average"></svg>
+        <div class="legend" id="legend2"></div>
+      </div>
+      <div class="card side" id="side">
+        <h3 id="side-title">—</h3>
+        <p class="sub" id="side-sub"></p>
+        <div class="bignum" id="side-rate">—</div>
+        <h4>Findings</h4>
+        <div class="stackbar" id="side-stack"></div>
+        <div class="legend" id="side-stack-legend"></div>
+        <h4>Most common allegations</h4>
+        <div class="bars" id="side-top"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ACT 3: WHY ============ -->
+  <section class="act" id="act3">
+    <div class="act-head">
+      <div class="act-num">3 · Why might this be?</div>
+      <h2>The busier the precinct, the lower the odds a complaint is upheld</h2>
+      <p>Each dot below is a precinct. Precincts with more complaints tend to have <em>lower</em> substantiation rates. The correlation is <strong id="r-val">—</strong>. This dataset can't prove why, but it can rule some explanations out and point toward others.</p>
+    </div>
+
+    <div class="grid-halves">
+      <div class="card">
+        <h3 class="fig-title">Complaint volume vs. substantiation rate</h3>
+        <p class="fig-sub">One dot per precinct with ≥ 100 allegations · hover links to the map above</p>
+        <svg id="scatter" role="img" aria-label="Scatter plot of precinct complaint volume against substantiation rate"></svg>
+      </div>
+      <div class="card">
+        <h3 class="fig-title">Busiest vs. quietest precincts</h3>
+        <p class="fig-sub">The quarter of precincts with the most complaints vs. the quarter with the fewest</p>
+        <svg id="dumbbell" role="img" aria-label="Comparison of busiest and quietest precinct quartiles on three measures"></svg>
+        <div class="legend">
+          <span><span class="sw round" style="background:var(--text-primary)"></span>Busiest quarter</span>
+          <span><span class="sw round" style="background:var(--surface-1);box-shadow:inset 0 0 0 1.5px var(--text-primary)"></span>Quietest quarter</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callouts">
+      <div class="callout">
+        <h4>Not the type of allegation</h4>
+        <p id="why-mix">—</p>
+      </div>
+      <div class="callout">
+        <h4>Who is complaining</h4>
+        <p id="why-race">—</p>
+      </div>
+      <div class="callout">
+        <h4>What we can't see yet: policing intensity</h4>
+        <p>Precincts that get more stops and searches have more encounters that end in disputed accounts, often with no witnesses or video. The CCRB can't substantiate those. Testing this means joining per-precinct stop and arrest counts, which this dataset doesn't include.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="takeaway">
+    <div class="act-num">Takeaway</div>
+    <h2>The neighborhoods that complain the most get the least resolution</h2>
+    <p>Complaints are concentrated in a few predominantly Black and Latino precincts. Allegations from those precincts are <strong id="t-gap">—</strong> less likely to be substantiated than allegations from the city's quietest precincts. The type of allegation doesn't explain the gap. A New Yorker's chance of having a complaint upheld seems to depend partly on where they live.</p>
+  </section>
+
+  <section class="act" style="margin-top:48px">
+    <div class="act-num" style="margin-bottom:8px">About the data</div>
+    <ul class="notes">
+      <li><strong>Source:</strong> <a href="https://projects.propublica.org/nypd-ccrb/">ProPublica's release of NYC CCRB records</a> (Sept 1985 – Jan 2020). Precinct boundaries come from NYC Open Data. This page uses complaints received from 2000 to 2019, because earlier years are sparse.</li>
+      <li><strong>This is not every complaint.</strong> The release only covers officers who were still on the force in 2020 and had at least one substantiated allegation. That pushes the substantiation rates here above the CCRB's true overall rate, so compare precincts with each other, not with outside figures.</li>
+      <li><strong>Units:</strong> a complaint can include several allegations against several officers. Act 1 counts complaints. Acts 2 and 3 count allegations, since the CCRB rules on each one separately.</li>
+      <li><strong>Location and time:</strong> the data only records the precinct and the month received, so Act 1 adds up complaints by precinct and month.</li>
+      <li>Counts are raw, not adjusted for population. Precincts with fewer than 100 allegations are grayed out in Act 2 and left out of Act 3, because their rates are too noisy.</li>
+    </ul>
+    <p id="status" class="notes"></p>
+  </section>
+</main>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script>
+(async function () {
+  // ================= config =================
+  const START = new Date(2000, 0, 1), END = new Date(2019, 11, 1);
+  const MIN_N = 100;
+  const FADO = ["Abuse of Authority", "Force", "Discourtesy", "Offensive Language"];
+  const FADO_LABEL = { "Abuse of Authority": "Abuse of authority", "Force": "Force", "Discourtesy": "Discourtesy", "Offensive Language": "Offensive language" };
+  const OUTCOMES = [
+    { key: "Substantiated", color: "--sub" },
+    { key: "Exonerated", color: "--exon" },
+    { key: "Unsubstantiated", color: "--unsub" },
+  ];
+  const BORO = p => p <= 34 ? "Manhattan" : p <= 52 ? "Bronx" : p <= 94 ? "Brooklyn" : p <= 115 ? "Queens" : "Staten Island";
+  // Neighborhood names for precincts we call out (annotation only).
+  const HOOD = {
+    75: "East New York", 73: "Brownsville", 44: "Grand Concourse", 46: "Fordham", 67: "East Flatbush",
+    79: "Bed-Stuy", 40: "Mott Haven", 47: "Wakefield", 77: "Crown Heights", 120: "St. George",
+    5: "Chinatown", 1: "Lower Manhattan", 19: "Upper East Side", 84: "Downtown Brooklyn", 110: "Elmhurst",
+    45: "Throgs Neck", 70: "Midwood", 28: "Central Harlem", 9: "East Village", 100: "Rockaways",
+    30: "Hamilton Heights", 32: "Harlem", 23: "East Harlem", 25: "East Harlem", 33: "Washington Heights", 34: "Inwood",
+    14: "Midtown South", 18: "Midtown North", 41: "Hunts Point", 42: "Morrisania", 43: "Soundview", 48: "Belmont", 52: "Bedford Park",
+    60: "Coney Island", 69: "Canarsie", 71: "Prospect Lefferts", 81: "Ocean Hill", 83: "Bushwick", 90: "Williamsburg",
+    101: "Far Rockaway", 103: "Jamaica", 113: "South Jamaica", 114: "Astoria", 115: "Jackson Heights", 121: "Port Richmond",
+  };
+  const pname = p => HOOD[p] ? `Precinct ${p} · ${HOOD[p]}` : `Precinct ${p}`;
+
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const pct = (v, d = 0) => (v * 100).toFixed(d) + "%";
+  const fmtMonth = d3.timeFormat("%B %Y");
+  const mkey = d => d.getFullYear() * 12 + d.getMonth();
+  const kdate = k => new Date(Math.floor(k / 12), k % 12, 1);
+  const K0 = mkey(START), K1 = mkey(END);
+
+  // ================= load =================
+  let geo, rows;
+  try {
+    [geo, rows] = await Promise.all([d3.json("data/precincts.geojson"), d3.csv("data/allegations.csv")]);
+  } catch (e) {
+    document.getElementById("status").innerHTML = `<span class="error">Couldn't load the data/ files. Serve this folder over HTTP (for example, <code>python -m http.server</code>) instead of opening the file directly.</span>`;
+    return;
+  }
+  const precinctIds = new Set(geo.features.map(f => +f.properties.precinct));
+
+  // ================= derive =================
+  // allegation-level rows within the window
+  const alleg = [];
+  for (const r of rows) {
+    const p = +r.precinct, y = +r.year_received;
+    if (!precinctIds.has(p) || y < 2000 || y > 2019) continue;
+    alleg.push({
+      cid: r.complaint_id, precinct: p, mk: y * 12 + (+r.month_received - 1),
+      fado: r.fado_type, allegation: r.allegation,
+      outcome: r.board_disposition.split(" (")[0],
+      compRace: r.complainant_ethnicity,
+    });
+  }
+  // complaint-level (Act 1)
+  const complaints = Array.from(d3.group(alleg, a => a.cid), ([cid, as]) => ({
+    id: cid, precinct: as[0].precinct, mk: as[0].mk, fados: new Set(as.map(a => a.fado)),
+  }));
+
+  // per-precinct stats (Acts 2-3)
+  const cityRate = d3.mean(alleg, a => a.outcome === "Substantiated");
+  // substantiation rate for each allegation type (used to compute a precinct's "expected" rate from its mix)
+  const fadoRates = new Map(FADO.map(f => {
+    const as = alleg.filter(a => a.fado === f);
+    return [f, as.filter(a => a.outcome === "Substantiated").length / as.length];
+  }));
+  const stats = new Map();
+  for (const [p, as] of d3.group(alleg, a => a.precinct)) {
+    const n = as.length;
+    const outc = Object.fromEntries(OUTCOMES.map(o => [o.key, as.filter(a => a.outcome === o.key).length]));
+    stats.set(p, {
+      p, n, outc,
+      complaints: new Set(as.map(a => a.cid)).size,
+      rate: outc.Substantiated / n,
+      force: as.filter(a => a.fado === "Force").length / n,
+      black: as.filter(a => a.compRace === "Black").length / n,
+      top: d3.rollups(as, v => v.length, a => a.allegation).sort((a, b) => b[1] - a[1]).slice(0, 5),
+      expected: d3.mean(as, a => fadoRates.get(a.fado)),
+    });
+  }
+
+  const reliable = [...stats.values()].filter(s => s.n >= MIN_N);
+  const byVol = [...reliable].sort((a, b) => b.complaints - a.complaints);
+  const q = Math.floor(byVol.length / 4);
+  const busiest = byVol.slice(0, q), quietest = byVol.slice(-q);
+  const pool = (grp, f) => d3.sum(grp, s => f(s) * s.n) / d3.sum(grp, s => s.n);   // allegation-weighted
+  const G = {
+    busy: { rate: pool(busiest, s => s.rate), force: pool(busiest, s => s.force), black: pool(busiest, s => s.black), expected: pool(busiest, s => s.expected) },
+    quiet: { rate: pool(quietest, s => s.rate), force: pool(quietest, s => s.force), black: pool(quietest, s => s.black), expected: pool(quietest, s => s.expected) },
+  };
+  const corr = (xs, ys) => {
+    const mx = d3.mean(xs), my = d3.mean(ys);
+    const num = d3.sum(xs, (x, i) => (x - mx) * (ys[i] - my));
+    return num / Math.sqrt(d3.sum(xs, x => (x - mx) ** 2) * d3.sum(ys, y => (y - my) ** 2));
+  };
+  const rVol = corr(reliable.map(s => Math.log10(s.complaints)), reliable.map(s => s.rate));
+
+  // ---- narrative numbers ----
+  const totalComplaints = complaints.length;
+  const top10 = [...stats.values()].sort((a, b) => b.complaints - a.complaints).slice(0, 10);
+  const top10Share = d3.sum(top10, s => s.complaints) / totalComplaints;
+  d3.select("#h-total").text(totalComplaints.toLocaleString());
+  d3.select("#h-top10").text(`${pct(top10Share)}`);
+  d3.select("#r-val").text(`r = ${rVol.toFixed(2)}`);
+  d3.select("#why-mix").html(`If the busiest precincts just had more force allegations, which are rarely upheld, that could explain the gap. They don't. Force makes up <b>${pct(G.busy.force)}</b> of allegations in the busiest quarter and <b>${pct(G.quiet.force)}</b> in the quietest. Based on allegation type alone, both groups would be expected to land near <b>${pct(G.busy.expected)}</b> substantiated.`);
+  d3.select("#why-race").html(`<b>${pct(G.busy.black)}</b> of allegations in the busiest precincts come from Black complainants, vs. <b>${pct(G.quiet.black)}</b> in the quietest. Citywide, allegations from Black complainants are substantiated less often than those from white complainants (<b>${pct(rateBy("Black"))}</b> vs. <b>${pct(rateBy("White"))}</b>).`);
+  d3.select("#t-gap").text(`${pct(1 - G.busy.rate / G.quiet.rate)}`);
+  function rateBy(race) { const as = alleg.filter(a => a.compRace === race); return as.filter(a => a.outcome === "Substantiated").length / as.length; }
+
+  // ================= shared: tooltip + linked highlight =================
+  const tip = document.getElementById("tooltip");
+  function showTip(ev, html) {
+    tip.innerHTML = html; tip.style.opacity = 1;
+    const pad = 14, r = tip.getBoundingClientRect();
+    let x = ev.clientX + pad, y = ev.clientY + pad;
+    if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - pad;
+    if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - pad;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  const hideTip = () => { tip.style.opacity = 0; };
+  const hlListeners = [];
+  function highlight(p) { hlListeners.forEach(fn => fn(p)); }
+
+  // ================= map helpers =================
+  const MW = 760, MH = 760;
+  const projection = d3.geoMercator().fitExtent([[10, 70], [MW - 10, MH - 10]], geo);
+  const path = d3.geoPath(projection);
+  // label anchor per precinct; a few neighbors get nudged apart so their labels don't collide
+  const NUDGE = { 73: [8, -12], 75: [30, 14], 77: [-46, 10], 1: [-34, 10], 5: [16, -10] };
+  const centroid = new Map(geo.features.map(f => {
+    const p = +f.properties.precinct, [x, y] = path.centroid(f), [nx, ny] = NUDGE[p] || [0, 0];
+    return [p, [x + nx, y + ny]];
+  }));
+
+  // =====================================================================
+  // ACT 1 — running total: each precinct's share of complaints since Jan 2000
+  // =====================================================================
+  const act1 = { cats: new Set(["Abuse of Authority", "Force", "Discourtesy"]), cursor: K1, playing: false };
+  const fold = f => f === "Offensive Language" ? "Discourtesy" : f;
+  const PIDS = [...precinctIds];
+  let byMonth = new Map(), cum = [], cumTotal = [], shareMax = 0.05;
+  function refilter1() {
+    const fc = complaints.filter(c => [...c.fados].some(f => act1.cats.has(fold(f))));
+    byMonth = d3.group(fc, c => c.mk);
+    // cumulative count per precinct at the end of every month
+    cum = []; cumTotal = [];
+    const run = new Map(PIDS.map(p => [p, 0]));
+    let tot = 0;
+    for (let k = K0; k <= K1; k++) {
+      for (const c of byMonth.get(k) || []) { run.set(c.precinct, run.get(c.precinct) + 1); tot++; }
+      cum.push(new Map(run)); cumTotal.push(tot);
+    }
+    // Fixed color/bar scale for the whole animation: the largest share any precinct holds once a full
+    // year has accumulated. The first few months (a handful of complaints) are noisy and get clamped.
+    shareMax = 0;
+    for (let i = 12; i < cum.length; i++) for (const v of cum[i].values()) shareMax = Math.max(shareMax, v / cumTotal[i]);
+  }
+  const at = k => ({ counts: cum[k - K0], total: cumTotal[k - K0] });
+  const ranking = k => {
+    const { counts, total } = at(k);
+    return [...counts].filter(d => d[1] > 0)
+      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+      .map(([p, n], i) => ({ p, n, share: total ? n / total : 0, rank: i + 1 }));
+  };
+
+  const map1 = d3.select("#map1").attr("viewBox", `0 0 ${MW} ${MH}`);
+  const p1 = map1.append("g").selectAll("path").data(geo.features).join("path")
+    .attr("class", "precinct").attr("d", path)
+    .on("mousemove", (ev, f) => {
+      const p = +f.properties.precinct; highlight(p);
+      const r = ranking(act1.cursor).find(d => d.p === p);
+      showTip(ev, `<b>${pname(p)}</b><br>` + (r
+        ? `${pct(r.share, 1)} of the city's complaints since Jan 2000<br><span class="muted">${r.n.toLocaleString()} complaints · ranked #${r.rank} of 77</span>`
+        : `<span class="muted">No complaints yet</span>`));
+    })
+    .on("mouseleave", () => { highlight(null); hideTip(); });
+  const labels1 = map1.append("g");
+
+  function render1(dur = 0) {
+    const { total } = at(act1.cursor);
+    const ranked = ranking(act1.cursor);
+    const shareOf = new Map(ranked.map(d => [d.p, d.share]));
+    const fill = d3.scaleSequential(d3.interpolateRgb(css("--share-lo"), css("--share-hi"))).domain([0, shareMax]).clamp(true);
+    p1.transition("fill").duration(dur).ease(d3.easeLinear)
+      .attr("fill", f => fill(shareOf.get(+f.properties.precinct) || 0));
+
+    // label whichever precincts are currently the top 5
+    labels1.selectAll("text").data(ranked.slice(0, 5), d => d.p).join("text")
+      .attr("class", "map-label").attr("text-anchor", "middle")
+      .attr("x", d => centroid.get(d.p)[0]).attr("y", d => centroid.get(d.p)[1])
+      .text(d => HOOD[d.p] || d.p);
+
+    d3.select("#clock-month").text(fmtMonth(kdate(act1.cursor)));
+    d3.select("#clock-count").text(`${total.toLocaleString()} complaints since Jan 2000`);
+    d3.select("#legend1").html(
+      `<span>Share of all complaints since Jan 2000: 0%<span class="ramp" style="background:linear-gradient(to right,var(--share-lo),var(--share-hi))"></span>${pct(shareMax, 1)}+</span>`
+    );
+    renderRace(ranked, total, dur);
+    moveCursor();
+  }
+
+  // ---- running-total ranking (top 10) ----
+  const N_RACE = 10, ROW_H = 40;
+  const race = d3.select("#top10").style("height", `${N_RACE * ROW_H}px`);
+  function renderRace(ranked, total, dur) {
+    const top = ranked.slice(0, N_RACE);
+    const w = s => Math.min(1, s / shareMax) * 100;
+    // Rows mid-exit are excluded so a precinct that re-enters quickly gets a fresh row
+    // instead of reusing one whose exit animation is still running.
+    race.selectAll(".row:not(.exiting)").data(top, d => d.p).join(
+      enter => enter.append("div").attr("class", "row")
+        .style("top", `${N_RACE * ROW_H}px`).style("opacity", 0)
+        .html(d => `<span class="lbl"><b>${d.p}</b> ${HOOD[d.p] || ""} <span style="color:var(--text-muted)">· ${BORO(d.p)}</span></span>
+          <span class="val"></span><div class="track"><div class="fill" style="width:0%"></div></div>`)
+        .on("mouseenter", (ev, d) => highlight(d.p))
+        .on("mouseleave", () => highlight(null)),
+      update => update,
+      exit => exit.classed("exiting", true).interrupt("pos")
+        .transition("exit").duration(dur).style("top", `${N_RACE * ROW_H}px`).style("opacity", 0).remove()
+    ).call(sel => {
+      sel.select(".val").html(d => `${pct(d.share, 1)}<small>${d.n.toLocaleString()}</small>`);
+      sel.transition("pos").duration(dur).ease(d3.easeLinear)
+        .style("top", (d, i) => `${i * ROW_H}px`).style("opacity", 1);
+      sel.select(".fill").transition("w").duration(dur).ease(d3.easeLinear).style("width", d => `${w(d.share)}%`);
+    });
+    const topShare = total ? d3.sum(top, d => d.n) / total : 0;
+    d3.select("#top10-sub").text(`Share of complaints, Jan 2000 – ${fmtMonth(kdate(act1.cursor))} · hover to find on map`);
+    d3.select("#top10-note").html(`So far, these 10 precincts account for <b style="color:var(--text-primary)">${pct(topShare)}</b> of all complaints. An even split would give them 13%.`);
+  }
+
+  // ---- Act 1 timeline (monthly counts; shaded = months included in the running total) ----
+  const TW = 760, TH = 110, tm = { t: 8, r: 8, b: 22, l: 34 };
+  const tl = d3.select("#timeline").attr("viewBox", `0 0 ${TW} ${TH}`);
+  const tx = d3.scaleTime().domain([START, END]).range([tm.l, TW - tm.r]);
+  const ty = d3.scaleLinear().range([TH - tm.b, tm.t]);
+  const tGrid = tl.append("g").attr("class", "gridlines").attr("transform", `translate(${tm.l},0)`);
+  tl.append("g").attr("class", "axis").attr("transform", `translate(0,${TH - tm.b})`).call(d3.axisBottom(tx).ticks(d3.timeYear.every(2)).tickSizeOuter(0));
+  const tY = tl.append("g").attr("class", "axis").attr("transform", `translate(${tm.l},0)`);
+  const clipId = "tl-clip";
+  const tClip = tl.append("clipPath").attr("id", clipId).append("rect").attr("x", tm.l).attr("y", 0).attr("height", TH);
+  const tArea = tl.append("path").attr("clip-path", `url(#${clipId})`).attr("fill-opacity", 0.18);
+  const tLine = tl.append("path").attr("fill", "none").attr("stroke-width", 2);
+  const tCur = tl.append("line").attr("y1", tm.t).attr("y2", TH - tm.b).attr("stroke-width", 1.5);
+  const tDot = tl.append("circle").attr("r", 4).attr("stroke-width", 2);
+  const tHit = tl.append("rect").attr("x", tm.l).attr("width", TW - tm.l - tm.r).attr("height", TH).attr("fill", "transparent").style("cursor", "ew-resize");
+  let series = [];
+  function renderTimeline() {
+    series = d3.range(K0, K1 + 1).map(k => ({ k, date: kdate(k), n: (byMonth.get(k) || []).length }));
+    ty.domain([0, d3.max(series, d => d.n) || 1]).nice();
+    tY.call(d3.axisLeft(ty).ticks(3).tickSizeOuter(0));
+    tGrid.call(d3.axisLeft(ty).ticks(3).tickSize(-(TW - tm.l - tm.r)).tickFormat(""));
+    tLine.attr("stroke", css("--pulse")).attr("d", d3.line().x(d => tx(d.date)).y(d => ty(d.n))(series));
+    tArea.attr("fill", css("--pulse")).attr("d", d3.area().x(d => tx(d.date)).y0(ty(0)).y1(d => ty(d.n))(series));
+    moveCursor();
+  }
+  function moveCursor() {
+    const d = series.find(s => s.k === act1.cursor);
+    if (!d) return;
+    tClip.attr("width", Math.max(0, tx(d.date) - tm.l));
+    tCur.attr("x1", tx(d.date)).attr("x2", tx(d.date)).attr("stroke", css("--text-primary"));
+    tDot.attr("cx", tx(d.date)).attr("cy", ty(d.n)).attr("fill", css("--text-primary")).attr("stroke", css("--surface-1"));
+  }
+  const kAt = ev => { const [mx] = d3.pointer(ev, tl.node()); return Math.max(K0, Math.min(K1, mkey(d3.timeMonth.round(tx.invert(mx))))); };
+  function scrub(ev) { pause(); act1.cursor = kAt(ev); render1(0); }
+  tHit.on("mousemove", ev => { const d = series.find(s => s.k === kAt(ev)); if (d) showTip(ev, `<b>${fmtMonth(d.date)}</b><br>${d.n} complaints received`); })
+    .on("mouseleave", hideTip)
+    .on("click", scrub)
+    .call(d3.drag().on("start drag", ev => scrub(ev.sourceEvent)));
+
+  // ---- Act 1 controls ----
+  let timer = null;
+  const playBtn = document.getElementById("play");
+  const speed = () => +document.getElementById("speed").value;
+  function play() {
+    if (act1.cursor >= K1) { act1.cursor = K0; render1(0); }   // replay from the start
+    act1.playing = true; playBtn.textContent = "Pause"; clearInterval(timer);
+    timer = setInterval(() => {
+      if (act1.cursor >= K1) { pause(); return; }               // stop on the final 20-year total
+      act1.cursor++; render1(speed());
+    }, speed());
+  }
+  function pause() { act1.playing = false; playBtn.textContent = act1.cursor >= K1 ? "Replay" : "Play"; clearInterval(timer); }
+  playBtn.onclick = () => act1.playing ? pause() : play();
+  document.getElementById("speed").onchange = () => act1.playing && play();
+  const chipDefs = [["Abuse of Authority", "Abuse of authority"], ["Force", "Force"], ["Discourtesy", "Discourtesy / offensive language"]];
+  const chips = d3.select("#chips").selectAll("button").data(chipDefs).join("button")
+    .attr("class", "chip").attr("aria-pressed", "true").text(d => d[1])
+    .on("click", (ev, [k]) => {
+      if (act1.cats.has(k)) { if (act1.cats.size > 1) act1.cats.delete(k); } else act1.cats.add(k);
+      chips.attr("aria-pressed", d => act1.cats.has(d[0]));
+      refilter1(); renderTimeline(); render1(250);
+    });
+
+  hlListeners.push(p => {
+    p1.classed("hl", f => +f.properties.precinct === p);
+    p1.filter(f => +f.properties.precinct === p).raise();
+    race.selectAll(".row").classed("hl", d => d.p === p);
+  });
+
+  // =====================================================================
+  // ACT 2a — outcome stacked bars by allegation type
+  // =====================================================================
+  const OW = 1140, rowH = 30, gap = 14;
+  const outRows = [{ label: "All allegations", as: alleg }, ...FADO.map(f => ({ label: FADO_LABEL[f], as: alleg.filter(a => a.fado === f) }))];
+  const OH = outRows.length * (rowH + gap) + 8, olabel = 150;
+  const out = d3.select("#outcomes").attr("viewBox", `0 0 ${OW} ${OH}`);
+  const ox = d3.scaleLinear().domain([0, 1]).range([olabel, OW - 8]);
+  function renderOutcomes() {
+    out.selectAll("*").remove();
+    outRows.forEach((r, i) => {
+      const y = i * (rowH + gap);
+      const n = r.as.length;
+      const g = out.append("g").attr("transform", `translate(0,${y})`);
+      g.append("text").attr("x", 0).attr("y", rowH / 2).attr("dy", "0.35em").attr("class", "val-label")
+        .style("font-weight", i === 0 ? 600 : 400).text(r.label);
+      g.append("text").attr("x", 0).attr("y", rowH / 2 + 14).attr("dy", "0.35em").attr("class", "anno").style("font-size", "11px").text(`${n.toLocaleString()} allegations`);
+      let acc = 0;
+      for (const o of OUTCOMES) {
+        const v = r.as.filter(a => a.outcome === o.key).length / n;
+        const x0 = ox(acc), w = Math.max(0, ox(acc + v) - ox(acc) - 2);
+        g.append("rect").attr("x", x0).attr("y", 2).attr("width", w).attr("height", rowH - 4).attr("rx", 3).attr("fill", css(o.color))
+          .on("mousemove", ev => showTip(ev, `<b>${r.label}</b><br>${o.key}: ${pct(v, 1)}<br><span class="muted">${Math.round(v * n).toLocaleString()} of ${n.toLocaleString()} allegations</span>`))
+          .on("mouseleave", hideTip);
+        if (w > 44) g.append("text").attr("x", x0 + 8).attr("y", rowH / 2).attr("dy", "0.35em").attr("class", "val-label")
+          .style("fill", o.key === "Unsubstantiated" ? css("--text-primary") : "#fff").style("pointer-events", "none").text(pct(v));
+        acc += v;
+      }
+    });
+    // annotation on Force row
+    const fi = outRows.findIndex(r => r.label === "Force");
+    const fy = fi * (rowH + gap) + rowH / 2;
+    const fsub = fadoRates.get("Force");
+    out.append("text").attr("class", "anno").attr("x", ox(1) - 4).attr("y", fy - rowH / 2 - 3).attr("text-anchor", "end")
+      .text(`Force: only ${pct(fsub)} substantiated, and the officer is cleared outright in about half of cases`);
+  }
+
+  // =====================================================================
+  // ACT 2b — substantiation-rate map + side panel
+  // =====================================================================
+  const map2 = d3.select("#map2").attr("viewBox", `0 0 ${MW} ${MH}`);
+  const ext = d3.extent(reliable, s => s.rate);
+  const span = Math.max(cityRate - ext[0], ext[1] - cityRate);
+  let divScale;
+  const p2 = map2.append("g").selectAll("path").data(geo.features).join("path")
+    .attr("class", "precinct").attr("d", path)
+    .on("mousemove", (ev, f) => {
+      const p = +f.properties.precinct, s = stats.get(p);
+      highlight(p); showSide(p);
+      showTip(ev, s && s.n >= MIN_N
+        ? `<b>${pname(p)}</b><br>${pct(s.rate, 1)} substantiated <span class="muted">(city ${pct(cityRate, 1)})</span><br><span class="muted">${s.n.toLocaleString()} allegations</span>`
+        : `<b>${pname(p)}</b><br><span class="muted">Too few allegations to rate (${s ? s.n : 0})</span>`);
+    })
+    .on("mouseleave", () => { highlight(null); showSide(pinned); hideTip(); })
+    .on("click", (ev, f) => { const p = +f.properties.precinct; pinned = pinned === p ? null : p; showSide(pinned); });
+  const labels2 = map2.append("g");
+  let pinned = null;
+
+  function render2() {
+    divScale = d3.scaleDiverging()
+      .domain([cityRate - span, cityRate, cityRate + span])
+      .interpolator(t => t < 0.5 ? d3.interpolateRgb(css("--div-lo"), css("--div-mid"))(t * 2) : d3.interpolateRgb(css("--div-mid"), css("--div-hi"))((t - 0.5) * 2));
+    p2.attr("fill", f => { const s = stats.get(+f.properties.precinct); return s && s.n >= MIN_N ? divScale(s.rate) : css("--nodata"); });
+    const callouts = [byVol[0], ...[...reliable].sort((a, b) => b.rate - a.rate).slice(0, 2)];
+    labels2.selectAll("text").data(callouts).join("text").attr("class", "map-label").attr("text-anchor", "middle")
+      .attr("x", s => centroid.get(s.p)[0]).attr("y", s => centroid.get(s.p)[1])
+      .text(s => `${HOOD[s.p] || s.p} ${pct(s.rate)}`);
+    d3.select("#legend2").html(
+      `<span>${pct(cityRate - span)}<span class="ramp" style="background:linear-gradient(to right,var(--div-lo),var(--div-mid),var(--div-hi))"></span>${pct(cityRate + span)}</span>` +
+      `<span>Middle (gray) = city average, ${pct(cityRate, 1)}</span>` +
+      `<span><span class="sw" style="background:var(--nodata);border:1px solid var(--border)"></span>Fewer than ${MIN_N} allegations</span>`
+    );
+  }
+  function showSide(p) {
+    const isCity = p == null || !stats.get(p);
+    const n = isCity ? alleg.length : stats.get(p).n;
+    const outc = isCity ? Object.fromEntries(OUTCOMES.map(o => [o.key, alleg.filter(a => a.outcome === o.key).length])) : stats.get(p).outc;
+    const top = isCity ? d3.rollups(alleg, v => v.length, a => a.allegation).sort((a, b) => b[1] - a[1]).slice(0, 5) : stats.get(p).top;
+    const rate = outc.Substantiated / n;
+    d3.select("#side-title").text(isCity ? "All of NYC" : pname(p));
+    d3.select("#side-sub").text(isCity ? `${n.toLocaleString()} allegations · hover or click a precinct` : `${BORO(p)} · ${n.toLocaleString()} allegations${pinned === p ? " · click again to unpin" : ""}`);
+    const diff = rate - cityRate;
+    d3.select("#side-rate").html(`${pct(rate)} <small>substantiated${isCity ? "" : ` · ${diff >= 0 ? "+" : "−"}${Math.abs(diff * 100).toFixed(1)} pts vs. city`}</small>`);
+    d3.select("#side-stack").html(OUTCOMES.map(o => `<div style="width:${outc[o.key] / n * 100}%;background:var(${o.color})" title="${o.key}"></div>`).join(""));
+    d3.select("#side-stack-legend").html(OUTCOMES.map(o => `<span><span class="sw" style="background:var(${o.color})"></span>${o.key} ${pct(outc[o.key] / n)}</span>`).join(""));
+    const mx = top[0][1];
+    d3.select("#side-top").html(top.map(([k, v]) => `<div class="row"><span class="lbl">${k}</span><span class="val">${v.toLocaleString()}</span><div class="track"><div class="fill" style="width:${v / mx * 100}%;background:var(--text-muted)"></div></div></div>`).join(""));
+  }
+
+  // =====================================================================
+  // ACT 3a — scatter: volume vs rate
+  // =====================================================================
+  const SW = 560, SH = 400, sm = { t: 16, r: 16, b: 40, l: 46 };
+  const sc = d3.select("#scatter").attr("viewBox", `0 0 ${SW} ${SH}`);
+  const sx = d3.scaleLog().domain(d3.extent(reliable, s => s.complaints)).nice().range([sm.l, SW - sm.r]);
+  const sy = d3.scaleLinear().domain([0, d3.max(reliable, s => s.rate) * 1.1]).nice().range([SH - sm.b, sm.t]);
+  sc.append("g").attr("class", "gridlines").attr("transform", `translate(${sm.l},0)`).call(d3.axisLeft(sy).ticks(5).tickSize(-(SW - sm.l - sm.r)).tickFormat(""));
+  sc.append("g").attr("class", "axis").attr("transform", `translate(0,${SH - sm.b})`).call(d3.axisBottom(sx).ticks(5, "~s").tickSizeOuter(0));
+  sc.append("g").attr("class", "axis").attr("transform", `translate(${sm.l},0)`).call(d3.axisLeft(sy).ticks(5).tickFormat(d3.format(".0%")).tickSizeOuter(0));
+  sc.append("text").attr("class", "anno").attr("x", (sm.l + SW - sm.r) / 2).attr("y", SH - 6).attr("text-anchor", "middle").text("Complaints, 2000–2019 (log scale) →");
+  sc.append("text").attr("class", "anno").attr("transform", `translate(12,${(sm.t + SH - sm.b) / 2}) rotate(-90)`).attr("text-anchor", "middle").text("Allegations substantiated");
+  // city average reference + regression line (rate ~ log volume)
+  const cityLine = sc.append("line").attr("x1", sm.l).attr("x2", SW - sm.r).attr("y1", sy(cityRate)).attr("y2", sy(cityRate)).attr("stroke-dasharray", "4 3");
+  sc.append("text").attr("class", "anno").attr("x", SW - sm.r).attr("y", sy(cityRate) - 5).attr("text-anchor", "end").text(`city avg ${pct(cityRate)}`);
+  const lx = reliable.map(s => Math.log10(s.complaints)), ly = reliable.map(s => s.rate);
+  const mlx = d3.mean(lx), mly = d3.mean(ly);
+  const slope = d3.sum(lx, (x, i) => (x - mlx) * (ly[i] - mly)) / d3.sum(lx, x => (x - mlx) ** 2);
+  const fit = c => mly + slope * (Math.log10(c) - mlx);
+  const [c0, c1] = sx.domain();
+  const trend = sc.append("line").attr("x1", sx(c0)).attr("y1", sy(fit(c0))).attr("x2", sx(c1)).attr("y2", sy(fit(c1))).attr("stroke-width", 2);
+  const sDots = sc.append("g").selectAll("circle").data(reliable).join("circle")
+    .attr("cx", s => sx(s.complaints)).attr("cy", s => sy(s.rate)).attr("r", 5).attr("stroke-width", 1.5)
+    .style("cursor", "pointer")
+    .on("mousemove", (ev, s) => { highlight(s.p); showSide(s.p); showTip(ev, `<b>${pname(s.p)}</b><br>${s.complaints.toLocaleString()} complaints<br>${pct(s.rate, 1)} of allegations substantiated`); })
+    .on("mouseleave", () => { highlight(null); showSide(pinned); hideTip(); });
+  // label a few telling precincts
+  const sLabelled = [byVol[0], byVol[1], ...[...reliable].sort((a, b) => b.rate - a.rate).slice(0, 2)];
+  sc.append("g").selectAll("text").data(sLabelled).join("text").attr("class", "map-label").style("font-weight", 500)
+    .attr("x", s => sx(s.complaints) + (s.complaints > 1000 ? -8 : 8)).attr("y", s => sy(s.rate) + 4)
+    .attr("text-anchor", s => s.complaints > 1000 ? "end" : "start")
+    .text(s => HOOD[s.p] || `Pct ${s.p}`);
+  sc.append("text").attr("class", "anno").attr("x", sx(c1) - 4).attr("y", sy(fit(c1)) + 18).attr("text-anchor", "end").text(`trend, r = ${rVol.toFixed(2)}`);
+
+  function renderScatter() {
+    cityLine.attr("stroke", css("--text-muted"));
+    trend.attr("stroke", css("--div-lo"));
+    sDots.attr("fill", css("--sub")).attr("fill-opacity", 0.75).attr("stroke", css("--surface-1"));
+  }
+
+  // =====================================================================
+  // ACT 3b — dumbbell: busiest vs quietest quartile
+  // =====================================================================
+  const DW = 560, DH = 260, dm = { t: 24, r: 24, b: 30, l: 170 };
+  const db = d3.select("#dumbbell").attr("viewBox", `0 0 ${DW} ${DH}`);
+  const measures = [
+    { label: "Allegations substantiated", key: "rate" },
+    { label: "Allegations involving force", key: "force" },
+    { label: "From Black complainants", key: "black" },
+  ];
+  const dx = d3.scaleLinear().domain([0, 0.8]).range([dm.l, DW - dm.r]);
+  const dy = d3.scaleBand().domain(measures.map(m => m.label)).range([dm.t, DH - dm.b]).padding(0.4);
+  db.append("g").attr("class", "gridlines").attr("transform", `translate(0,${DH - dm.b})`).call(d3.axisBottom(dx).ticks(4).tickSize(-(DH - dm.t - dm.b)).tickFormat(""));
+  db.append("g").attr("class", "axis").attr("transform", `translate(0,${DH - dm.b})`).call(d3.axisBottom(dx).ticks(4).tickFormat(d3.format(".0%")).tickSizeOuter(0));
+  const dRows = db.append("g").selectAll("g").data(measures).join("g").attr("transform", m => `translate(0,${dy(m.label) + dy.bandwidth() / 2})`);
+  dRows.append("text").attr("class", "val-label").attr("x", 0).attr("dy", "0.35em").text(m => m.label);
+  const dLine = dRows.append("line").attr("x1", m => dx(G.busy[m.key])).attr("x2", m => dx(G.quiet[m.key])).attr("stroke-width", 2);
+  const dBusy = dRows.append("circle").attr("cx", m => dx(G.busy[m.key])).attr("r", 6);
+  const dQuiet = dRows.append("circle").attr("cx", m => dx(G.quiet[m.key])).attr("r", 5.5).attr("stroke-width", 2);
+  // when the two values are close, show the busiest label above and the quietest below so they don't collide
+  const close = m => Math.abs(G.busy[m.key] - G.quiet[m.key]) < 0.05;
+  dRows.append("text").attr("class", "anno").attr("dy", -12).attr("text-anchor", "middle").attr("x", m => dx(G.busy[m.key])).text(m => pct(G.busy[m.key]));
+  dRows.append("text").attr("class", "anno").attr("dy", m => close(m) ? 22 : -12).attr("text-anchor", "middle").attr("x", m => dx(G.quiet[m.key])).text(m => pct(G.quiet[m.key]));
+  dRows.append("rect").attr("x", dm.l).attr("y", -14).attr("width", DW - dm.l - dm.r).attr("height", 28).attr("fill", "transparent")
+    .on("mousemove", (ev, m) => showTip(ev, `<b>${m.label}</b><br>Busiest quarter: ${pct(G.busy[m.key], 1)}<br>Quietest quarter: ${pct(G.quiet[m.key], 1)}<br><span class="muted">${q} precincts in each group</span>`))
+    .on("mouseleave", hideTip);
+  function renderDumbbell() {
+    dLine.attr("stroke", css("--border"));
+    dBusy.attr("fill", css("--text-primary"));
+    dQuiet.attr("fill", css("--surface-1")).attr("stroke", css("--text-primary"));
+  }
+
+  // ---- link Act 2 map + Act 3 scatter ----
+  hlListeners.push(p => {
+    p2.classed("hl", f => +f.properties.precinct === p);
+    p2.filter(f => +f.properties.precinct === p).raise();
+    sDots.attr("r", s => s.p === p ? 8 : 5).attr("stroke", s => s.p === p ? css("--text-primary") : css("--surface-1"));
+    sDots.filter(s => s.p === p).raise();
+  });
+
+  // ================= boot =================
+  function renderAll() {
+    renderTimeline(); render1(0); renderOutcomes(); render2(); showSide(pinned); renderScatter(); renderDumbbell();
+  }
+  refilter1();
+  renderAll();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+  document.getElementById("status").textContent =
+    `${alleg.length.toLocaleString()} allegations in ${totalComplaints.toLocaleString()} complaints, 2000–2019. ${reliable.length} of 77 precincts have ≥ ${MIN_N} allegations.`;
+})();
+</script>
+</body>
+</html>
