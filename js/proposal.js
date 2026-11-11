@@ -208,6 +208,20 @@ async function main() {
   };
   renderAll();
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+
+  // Export to PDF = the browser's print dialog ("Save as PDF"), which keeps text selectable and charts as vectors.
+  // Charts read their colors from CSS tokens when drawn, so switch to the light theme and redraw before printing
+  // (a dark-mode reader would otherwise get dark pages), then restore afterwards.
+  const root = document.documentElement;
+  let savedTheme = null;
+  addEventListener("beforeprint", () => { savedTheme = root.getAttribute("data-theme"); root.setAttribute("data-theme", "light"); renderAll(); });
+  addEventListener("afterprint", () => {
+    savedTheme == null ? root.removeAttribute("data-theme") : root.setAttribute("data-theme", savedTheme);
+    renderAll();
+  });
+  const exportBtn = document.getElementById("export-pdf");
+  if (exportBtn) { exportBtn.disabled = false; exportBtn.addEventListener("click", () => print()); }   // enabled once the charts exist
+
   status.textContent = "All figures are computed live from the files in data/.";
 }
 

@@ -22,6 +22,26 @@
   @media (max-width: 880px) { .figs { grid-template-columns: 1fr; } }
   .fig-num { font-size: 12px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
   .caption { font-size: 13px; color: var(--text-secondary); margin: 10px 0 0; }
+  #export-pdf { margin-top: 4px; }
+  #export-pdf:disabled { opacity: 0.5; cursor: wait; }
+
+  /* ---------- print / "Save as PDF" ---------- */
+  @page { size: letter; margin: 0.5in; }
+  @media print {
+    .site-nav, .no-print, #status { display: none !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }   /* keep chart fills and legend ramps */
+    body { background: #fff; font-size: 11pt; }
+    main { max-width: none; padding: 0; }
+    header.hero { margin-bottom: 20px; }
+    h1 { font-size: 24pt; }
+    section.act { margin: 24px 0 0; }
+    .meta { margin-bottom: 20px; }
+    .figs { grid-template-columns: 1fr 1fr; gap: 12px; }   /* two figures per row on paper */
+    figure.card { break-inside: avoid; page-break-inside: avoid; padding: 10px; }
+    h2 { break-after: avoid; page-break-after: avoid; }
+    .writeup { break-inside: avoid; }
+    a { color: inherit; }
+  }
 </style>
 </head>
 <body>
@@ -37,6 +57,7 @@
   <header class="hero">
     <p class="kicker">DSC 209R · Final project proposal</p>
     <h1>Where Complaints Pile Up, They May Not Stick: NYPD Misconduct Allegations Across New York City</h1>
+    <button class="primary no-print" id="export-pdf" disabled title="Opens the print dialog; choose “Save as PDF” as the destination">Export to PDF</button>
   </header>
 
   <dl class="meta">
