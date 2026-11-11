@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Proposal</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .meta { display: grid; grid-template-columns: 140px 1fr; gap: 10px 20px; max-width: 760px; margin: 0 0 40px; font-size: 15px; }
+  .meta dt { color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; padding-top: 2px; }
+  .meta dd { margin: 0; color: var(--text-secondary); }
+  .meta dd strong { color: var(--text-primary); }
+  .meta ul { margin: 0; padding-left: 18px; }
+  @media (max-width: 600px) { .meta { grid-template-columns: 1fr; gap: 2px; } .meta dd { margin-bottom: 12px; } }
+  .writeup { max-width: 760px; }
+  .writeup p { color: var(--text-secondary); }
+  .writeup strong { color: var(--text-primary); }
+  .figs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  /* maps are drawn at 760px wide but shown at half width, so labels need a larger font in viewBox units */
+  #v-percap .map-label, #v-rate .map-label { font-size: 17px; stroke-width: 4px; }
+  #v-percap .map-label.minor, #v-rate .map-label.minor { font-size: 15px; }
+  @media (max-width: 880px) { .figs { grid-template-columns: 1fr; } }
+  .fig-num { font-size: 12px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+  .caption { font-size: 13px; color: var(--text-secondary); margin: 10px 0 0; }
+</style>
+</head>
+<body>
+<nav class="site-nav" aria-label="Pages">
+  <div class="site-nav-inner">
+    <span class="site-name">NYPD Complaints</span>
+    <a href="index.html">Explore</a>
+    <a href="proposal.html" aria-current="page">Proposal</a>
+  </div>
+</nav>
+<main>
+
+  <header class="hero">
+    <p class="kicker">DSC 209R · Final project proposal</p>
+    <h1>Where Complaints Pile Up, They May Not Stick: NYPD Misconduct Allegations Across New York City</h1>
+  </header>
+
+  <dl class="meta">
+    <dt>Team</dt>
+    <dd>
+      <ul>
+        <li>Aidan Sanchez</li>
+        <li>Anirudh Yetikuri</li>
+        <li>Jack Keeton</li>
+      </ul>
+    </dd>
+    <dt>Dataset</dt>
+    <dd>
+      <strong><a href="https://www.propublica.org/datastore/dataset/civilian-complaints-against-new-york-city-police-officers">Civilian Complaints Against New York City Police Officers</a></strong> (ProPublica, from NYC Civilian Complaint Review Board records).
+      Each row is one allegation against an officer received between 2000 and 2019.
+      <br><br>
+      Supporting data: <a href="https://data.cityofnewyork.us/d/y76i-bdw7">NYPD precinct boundaries</a> (NYC Open Data), and median household income and population from the 2020–2024 American Community Survey
+      (<a href="https://censusreporter.org/tables/B19001/">B19001</a>, <a href="https://censusreporter.org/tables/B01003/">B01003</a>; tracts placed in precincts using the <a href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html">Census Gazetteer</a>).
+    </dd>
+  </dl>
+
+  <section class="writeup">
+    <h2>What we intend to do</h2>
+    <p>
+      We will build an interactive article that lets readers explore civilian complaints against the New York City Police in three parts.
+      <br>
+      <strong>Where</strong> do complaints come from? An animated map displays the precincts of New York City, colored by the number of complaints received per resident. We will also have supplemental interactions to help readers
+      locate a point in time, a neighborhood, or a complaint type to dig deeper.
+      <br>
+      <strong>What happens</strong> after a complaint is filed? We will show how often the review board substantiates, exonerates, or can't decide each complaint. We will highlight the differences in substantiation between precincts.
+      <br>
+      <strong>Why</strong> might outcomes depend on where you live? 
+      We will show how complaint volume and substantiation rates relate to neighborhood income and population, and let readers explore the data by precinct. Due to this being an observational dataset, we will be careful
+      not to imply causation, but we will provide relevant reporting to help readers question why precincts may behave differently.
+    </p>
+  </section>
+
+  <section class="act">
+    <div class="act-head">
+      <h2>Static visualizations</h2>
+      <p>Six first looks at the data, in the order the final story will use them.</p>
+    </div>
+    <div class="figs">
+      <figure class="card" style="margin:0">
+        <div class="fig-num">Figure 1</div>
+        <h3 class="fig-title">Complaints received per year</h3>
+        <p class="fig-sub">Unique complaints, 2000–2019</p>
+        <svg id="v-years" role="img" aria-label="Bar chart of complaints received per year, 2000 to 2019"></svg>
+        <p class="caption" id="c-years"></p>
+      </figure>
+      <figure class="card" style="margin:0">
+        <div class="fig-num">Figure 2</div>
+        <h3 class="fig-title">The 15 precincts with the most complaints</h3>
+        <p class="fig-sub">Unique complaints, 2000–2019</p>
+        <svg id="v-top" role="img" aria-label="Bar chart of the 15 precincts with the most complaints"></svg>
+        <p class="caption" id="c-top"></p>
+      </figure>
+      <figure class="card" style="margin:0">
+        <div class="fig-num">Figure 3</div>
+        <h3 class="fig-title">Complaints per resident, by precinct</h3>
+        <p class="fig-sub">Complaints per 10,000 residents per year, 2000–2019</p>
+        <svg id="v-percap" role="img" aria-label="Map of NYC precincts shaded by complaints per resident"></svg>
+        <div class="legend" id="l-percap"></div>
+        <p class="caption" id="c-percap"></p>
+      </figure>
+      <figure class="card" style="margin:0">
+        <div class="fig-num">Figure 4</div>
+        <h3 class="fig-title">What the CCRB found, by allegation type</h3>
+        <p class="fig-sub">Share of allegations by finding, 2000–2019</p>
+        <svg id="v-outcomes" role="img" aria-label="Stacked bars of CCRB findings for each allegation type"></svg>
+        <div class="legend" id="l-outcomes"></div>
+        <p class="caption" id="c-outcomes"></p>
+      </figure>
+      <figure class="card" style="margin:0">
+        <div class="fig-num">Figure 5</div>
+        <h3 class="fig-title">Substantiation rate vs. city average, by precinct</h3>
+        <p class="fig-sub">Share of allegations substantiated, 2000–2019</p>
+        <svg id="v-rate" role="img" aria-label="Map of NYC precincts shaded by substantiation rate relative to the city average"></svg>
+        <div class="legend" id="l-rate"></div>
+        <p class="caption" id="c-rate"></p>
+      </figure>
+      <figure class="card" style="margin:0">
+        <div class="fig-num">Figure 6</div>
+        <h3 class="fig-title">Neighborhood income vs. complaints per resident</h3>
+        <p class="fig-sub">One dot per precinct with at least 100 allegations</p>
+        <svg id="v-income" role="img" aria-label="Scatter plot of median household income against complaints per resident"></svg>
+        <div class="legend" id="l-income"></div>
+        <p class="caption" id="c-income"></p>
+      </figure>
+    </div>
+  </section>
+
+  <p class="notes" id="status">Loading data…</p>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script type="module" src="js/proposal.js"></script>
+</body>
+</html>

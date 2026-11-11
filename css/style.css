@@ -45,6 +45,21 @@ body {
   font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 main { max-width: 1180px; margin: 0 auto; padding: 48px 16px 80px; }
+
+/* ---------- site navigation (shared by every page) ---------- */
+.site-nav {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--surface-1); border-bottom: 1px solid var(--border);
+}
+.site-nav-inner { max-width: 1180px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 4px; height: 48px; }
+.site-name { font-weight: 600; font-size: 14px; margin-right: auto; white-space: nowrap; }
+.site-nav a {
+  font-size: 14px; color: var(--text-secondary); text-decoration: none;
+  padding: 6px 12px; border-radius: 6px;
+}
+.site-nav a:hover { color: var(--text-primary); background: var(--surface-0); }
+.site-nav a[aria-current="page"] { color: var(--surface-1); background: var(--text-primary); }
+.site-nav a:focus-visible { outline: 2px solid var(--pulse); outline-offset: 2px; }
 a { color: inherit; }
 
 /* ---------- narrative ---------- */
