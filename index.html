@@ -122,7 +122,6 @@
   .race .val small { color: var(--text-muted); font-size: 11px; margin-left: 4px; }
   .race .mv { font-size: 10px; color: var(--text-secondary); margin-right: 6px; }
   .map-label.minor { font-size: 9.5px; font-weight: 500; }
-  .pulse-ring { fill: none; stroke: var(--pulse); }
   .precinct.event { stroke: var(--text-primary); stroke-width: 2.5; stroke-dasharray: 4 2; }
   .clock .event {
     margin-top: 10px; max-width: 250px; font-size: 13px; line-height: 1.4; color: var(--text-primary);
@@ -191,11 +190,21 @@
     <div class="act-head">
       <div class="act-num">1 · Where</div>
       <h2>A handful of neighborhoods carry most of the complaints</h2>
-      <p>Each precinct is shaded by its <strong>share of all complaints filed since January 2000</strong>. Press play to add up the 20 years month by month. Rings pulse wherever complaints arrive that month, and notes on the timeline mark turning points in NYPD policing. The early months jump around, but the ranking settles quickly, and the same places stay on top: <strong>East New York, Brownsville, and Bed-Stuy in Brooklyn, and the South and West Bronx</strong>.</p>
+      <p>Each precinct is shaded by its <strong>share of the city's complaints over the last three years</strong>, a window that slides forward as the animation plays. Use the Window menu to shorten it, or pick "Since 2000" for the full running total. Notes on the timeline mark turning points in NYPD policing. Watch <strong>East New York</strong> take the top spot in the mid-2000s and hold it for a decade, <strong>St. George</strong> enter the top five in 2012–2014 (the window that includes Eric Garner's death), and <strong>Mott Haven</strong> climb after 2015.</p>
+      <p>Switch to <strong>per resident</strong> to check that this isn't just a population map. Over the full 20 years, Brownsville, Bed-Stuy, and East New York still lead, and Harlem and East Harlem move up.</p>
     </div>
 
     <div class="controls">
+      <div class="controls seg" id="metric" role="group" aria-label="Map measure" style="margin:0"></div>
       <button id="play" class="primary">Play</button>
+      <label>Window
+        <select id="window">
+          <option value="12">1 year</option>
+          <option value="36" selected>3 years</option>
+          <option value="60">5 years</option>
+          <option value="0">Since 2000</option>
+        </select>
+      </label>
       <label>Speed
         <select id="speed"><option value="700">Slow</option><option value="300" selected>Normal</option><option value="120">Fast</option></select>
       </label>
@@ -211,8 +220,8 @@
         <svg id="timeline" role="img" aria-label="Complaints received per month, 2000–2019" style="margin-top:12px"></svg>
       </div>
       <div class="card">
-        <h3 class="fig-title">Top 10 precincts, running total</h3>
-        <p class="fig-sub" id="top10-sub">Share of complaints since Jan 2000 · hover to find on map</p>
+        <h3 class="fig-title" id="race-title">Top 10 precincts</h3>
+        <p class="fig-sub" id="top10-sub"></p>
         <div class="race" id="top10"></div>
         <p class="fig-sub" id="top10-note" style="margin-top:12px"></p>
       </div>
@@ -240,12 +249,14 @@
 
     <div class="act-head prose">
       <p>Now map the substantiation rate. If outcomes didn't depend on location, the map would be a flat gray. It isn't: <strong>red precincts have their allegations upheld less often than the city average</strong>, and many of them are the same precincts that lit up in Act 1.</p>
+      <p>Then switch to <strong>per resident</strong> to see how many allegations each neighborhood is left with. <span id="m2-note"></span></p>
     </div>
 
     <div class="grid-2">
       <div class="card">
-        <h3 class="fig-title">Substantiation rate vs. city average, by precinct</h3>
-        <p class="fig-sub">Share of allegations substantiated, 2000–2019 · hover or click a precinct</p>
+        <h3 class="fig-title" id="m2-title">Substantiation rate vs. city average, by precinct</h3>
+        <p class="fig-sub" id="m2-sub">Share of allegations substantiated, 2000–2019 · hover or click a precinct</p>
+        <div class="controls seg" id="m2-mode" role="group" aria-label="Map measure"></div>
         <svg id="map2" role="img" aria-label="Map of substantiation rate by precinct relative to city average"></svg>
         <div class="legend" id="legend2"></div>
       </div>
@@ -438,6 +449,9 @@
     s.pop = r.population;
     s.income = r.median_income || null;
     s.per10k = r.population > 0 ? s.complaints / r.population * 10000 / YEARS : null;  // complaints per 10k residents per year
+    // allegations upheld / not upheld (exonerated + unsubstantiated) per 10k residents per year
+    s.upPer10k = r.population > 0 ? s.outc.Substantiated / r.population * 10000 / YEARS : null;
+    s.noPer10k = r.population > 0 ? (s.n - s.outc.Substantiated) / r.population * 10000 / YEARS : null;
   }
 
   const reliable = [...stats.values()].filter(s => s.n >= MIN_N && s.income && s.per10k);
@@ -527,12 +541,40 @@
   }
 
   // =====================================================================
-  // ACT 1 — running total: each precinct's share of complaints since Jan 2000
+  // ACT 1 — complaints in a sliding window (or running total), as share of complaints or per resident
   // =====================================================================
-  const act1 = { cats: new Set(["Abuse of Authority", "Force", "Discourtesy"]), cursor: K1, playing: false };
+  const act1 = { cats: new Set(["Abuse of Authority", "Force", "Discourtesy"]), cursor: K1, playing: false, metric: "share", window: 36 };  // window in months; 0 = running total from Jan 2000
   const fold = f => f === "Offensive Language" ? "Discourtesy" : f;
   const PIDS = [...precinctIds];
-  let byMonth = new Map(), cum = [], cumTotal = [], shareMax = 0.05;
+  // Residential population per precinct (ACS). Below MIN_POP (only Central Park) a per-resident rate is meaningless.
+  const MIN_POP = 20000;
+  const POP = new Map(incomeRows.map(r => [r.precinct, r.population]));
+  const hasPop = p => (POP.get(p) || 0) >= MIN_POP;
+  // first month of the window ending at k (clipped to Jan 2000)
+  const winStart = k => act1.window ? Math.max(K0, k - act1.window + 1) : K0;
+  const fmtShort = d3.timeFormat("%b %Y");
+  const winLabel = k => `${fmtShort(kdate(winStart(k)))} – ${fmtShort(kdate(k))}`;
+  const METRICS = {
+    share: {
+      btn: "Share of complaints",
+      val: (n, p, total, months) => total ? n / total : 0,
+      fmt: v => pct(v, 1),
+      legend: "Share of the city's complaints in the window",
+      sub: k => `Share of complaints, ${winLabel(k)}`,
+      tip: (d, k) => `${pct(d.val, 1)} of the city's complaints, ${winLabel(k)}`,
+    },
+    percap: {
+      btn: "Per resident",
+      // annualized over the window so windows of any length (and partial windows early on) share one scale
+      val: (n, p, total, months) => hasPop(p) ? n / POP.get(p) * 10000 / (months / 12) : null,
+      fmt: v => v.toFixed(1),
+      legend: "Complaints per 10,000 residents per year",
+      sub: k => `Complaints per 10,000 residents per year, ${winLabel(k)}`,
+      tip: (d, k) => `${d.val.toFixed(1)} complaints per 10,000 residents per year<br><span class="muted">${(POP.get(d.p) / 1000).toFixed(0)}k residents</span>`,
+    },
+  };
+  const M = () => METRICS[act1.metric];
+  let byMonth = new Map(), cum = [], cumTotal = [], vmax = { share: 0.05, percap: 1 };
   function refilter1() {
     const fc = complaints.filter(c => [...c.fados].some(f => act1.cats.has(fold(f))));
     byMonth = d3.group(fc, c => c.mk);
@@ -544,17 +586,36 @@
       for (const c of byMonth.get(k) || []) { run.set(c.precinct, run.get(c.precinct) + 1); tot++; }
       cum.push(new Map(run)); cumTotal.push(tot);
     }
-    // Fixed color/bar scale for the whole animation: the largest share any precinct holds once a full
-    // year has accumulated. The first few months (a handful of complaints) are noisy and get clamped.
-    shareMax = 0;
-    for (let i = 12; i < cum.length; i++) for (const v of cum[i].values()) shareMax = Math.max(shareMax, v / cumTotal[i]);
+    computeVmax();
   }
-  const at = k => ({ counts: cum[k - K0], total: cumTotal[k - K0] });
+  // complaints per precinct inside the window ending at k (difference of two cumulative snapshots)
+  const at = k => {
+    const s = winStart(k), end = cum[k - K0], before = s > K0 ? cum[s - 1 - K0] : null;
+    const counts = before ? new Map([...end].map(([p, n]) => [p, n - before.get(p)])) : end;
+    return { counts, total: cumTotal[k - K0] - (before ? cumTotal[s - 1 - K0] : 0), months: k - s + 1 };
+  };
+  // Fixed color/bar scale per metric for the whole animation (for the current window): the largest value any
+  // precinct reaches once a full year of data exists. The first few months are noisy and get clamped.
+  function computeVmax() {
+    for (const key of Object.keys(METRICS)) {
+      let mx = 0;
+      for (let k = K0 + 11; k <= K1; k++) {
+        const { counts, total, months } = at(k);
+        for (const [p, n] of counts) {
+          const v = METRICS[key].val(n, p, total, months);
+          if (v != null && v > mx) mx = v;
+        }
+      }
+      vmax[key] = mx || 1;
+    }
+  }
   const ranking = k => {
-    const { counts, total } = at(k);
-    return [...counts].filter(d => d[1] > 0)
-      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-      .map(([p, n], i) => ({ p, n, share: total ? n / total : 0, rank: i + 1 }));
+    const { counts, total, months } = at(k);
+    return [...counts].filter(([p, n]) => n > 0)
+      .map(([p, n]) => ({ p, n, share: total ? n / total : 0, val: M().val(n, p, total, months) }))
+      .filter(d => d.val != null)
+      .sort((a, b) => b.val - a.val || a.p - b.p)
+      .map((d, i) => ({ ...d, rank: i + 1 }));
   };
 
   const map1 = d3.select("#map1").attr("viewBox", `0 0 ${MW} ${MH}`);
@@ -562,14 +623,16 @@
     .attr("class", "precinct").attr("d", path)
     .on("mousemove", (ev, f) => {
       const p = +f.properties.precinct; highlight(p);
-      const r = ranking(act1.cursor).find(d => d.p === p);
+      const ranked = ranking(act1.cursor), r = ranked.find(d => d.p === p);
       showTip(ev, `<b>${pname(p)}</b><br>` + (r
-        ? `${pct(r.share, 1)} of the city's complaints since Jan 2000<br><span class="muted">${r.n.toLocaleString()} complaints · ranked #${r.rank} of 77</span>`
-        : `<span class="muted">No complaints yet</span>`));
+        ? `${M().tip(r, act1.cursor)}<br><span class="muted">${r.n.toLocaleString()} complaints · ranked #${r.rank} of ${ranked.length}</span>` +
+          (act1.metric === "percap" && COMMERCIAL.has(p) ? `<br><span class="muted">Few residents but many workers and visitors, so this rate is inflated.</span>` : "")
+        : act1.metric === "percap" && !hasPop(p) ? `<span class="muted">Almost no residents, so no per-resident rate</span>` : `<span class="muted">No complaints yet</span>`));
     })
     .on("mouseleave", () => { highlight(null); hideTip(); });
-  const pulses = map1.append("g").style("pointer-events", "none");
   const labels1 = map1.append("g");
+  // Commercial precincts whose daytime population dwarfs residents: flag them in per-resident mode.
+  const COMMERCIAL = new Set([1, 14, 18]);
 
   // Context for the timeline. Facts about policing, not claims drawn from this dataset.
   const EVENTS = [
@@ -584,24 +647,17 @@
   function render1(dur = 0) {
     const { total } = at(act1.cursor);
     const ranked = ranking(act1.cursor);
-    const shareOf = new Map(ranked.map(d => [d.p, d.share]));
-    const fill = d3.scaleSequential(d3.interpolateRgb(css("--share-lo"), css("--share-hi"))).domain([0, shareMax]).clamp(true);
+    const valOf = new Map(ranked.map(d => [d.p, d.val]));
+    const fill = d3.scaleSequential(d3.interpolateRgb(css("--share-lo"), css("--share-hi"))).domain([0, vmax[act1.metric]]).clamp(true);
     p1.transition("fill").duration(dur).ease(d3.easeLinear)
-      .attr("fill", f => fill(shareOf.get(+f.properties.precinct) || 0));
+      .attr("fill", f => {
+        const p = +f.properties.precinct;
+        if (act1.metric === "percap" && !hasPop(p)) return css("--nodata");
+        return fill(valOf.get(p) || 0);
+      });
 
     // label the current leaders (top 5 prominent, the rest smaller), as many as fit
     placeLabels(labels1, ranked.slice(0, 16).map((d, i) => ({ p: d.p, text: HOOD[d.p], minor: i >= 5 })), 14);
-
-    // pulse: while playing, a ring at each precinct sized by the complaints it received this month
-    if (dur > 0) {
-      for (const [p, n] of d3.rollup(byMonth.get(act1.cursor) || [], v => v.length, c => c.precinct)) {
-        const [cx, cy] = centroid.get(p);
-        pulses.append("circle").attr("class", "pulse-ring").attr("cx", cx).attr("cy", cy).attr("r", 2)
-          .attr("stroke-width", 2).attr("opacity", 0.9)
-          .transition().duration(1500).ease(d3.easeCubicOut)
-          .attr("r", 5 + 6 * Math.sqrt(n)).attr("opacity", 0).remove();
-      }
-    }
 
     // story beats: caption + outline the precinct involved while the cursor is inside the event window
     const ev = EVENTS.find(e => act1.cursor >= e.k && act1.cursor < e.k + e.span);
@@ -610,10 +666,10 @@
     tEvents.classed("active", e => e === ev);
 
     d3.select("#clock-month").text(fmtMonth(kdate(act1.cursor)));
-    d3.select("#clock-count").text(`${total.toLocaleString()} complaints since Jan 2000`);
+    d3.select("#clock-count").text(`${total.toLocaleString()} complaints, ${winLabel(act1.cursor)}`);
     d3.select("#legend1").html(
-      `<span>Share of all complaints since Jan 2000: 0%<span class="ramp" style="background:linear-gradient(to right,var(--share-lo),var(--share-hi))"></span>${pct(shareMax, 1)}+</span>` +
-      `<span><span class="sw round" style="background:transparent;box-shadow:inset 0 0 0 2px var(--pulse)"></span>Ring = complaints received that month (bigger = more)</span>`
+      `<span>${M().legend}: 0<span class="ramp" style="background:linear-gradient(to right,var(--share-lo),var(--share-hi))"></span>${M().fmt(vmax[act1.metric])}+</span>` +
+      (act1.metric === "percap" ? `<span><span class="sw" style="background:var(--nodata);border:1px solid var(--border)"></span>Almost no residents (Central Park)</span>` : "")
     );
     renderRace(ranked, total, dur);
     moveCursor();
@@ -626,9 +682,9 @@
   const race = d3.select("#top10").style("height", `${N_RACE * ROW_H}px`);
   function renderRace(ranked, total, dur) {
     const top = ranked.slice(0, N_RACE);
-    const w = s => Math.min(1, s / shareMax) * 100;
+    const w = v => Math.min(1, v / vmax[act1.metric]) * 100;
     // remember rank changes during playback so rows can show ▲/▼ for a few months afterward
-    if (dur > 0) for (const d of top) {
+    if (act1.playing) for (const d of top) {
       const prev = prevRank.get(d.p);
       if (prev !== undefined && prev !== d.rank) moves.set(d.p, { up: prev > d.rank, k: act1.cursor });
     } else moves.clear();
@@ -647,17 +703,21 @@
       exit => exit.classed("exiting", true).interrupt("pos")
         .transition("exit").duration(dur).style("top", `${N_RACE * ROW_H}px`).style("opacity", 0).remove()
     ).call(sel => {
-      sel.select(".val").html(d => `${mv(d)}${pct(d.share, 1)}<small>${d.n.toLocaleString()}</small>`);
+      sel.select(".val").html(d => `${mv(d)}${M().fmt(d.val)}${act1.metric === "percap" && COMMERCIAL.has(d.p) ? "*" : ""}<small>${d.n.toLocaleString()}</small>`);
       sel.transition("pos").duration(dur).ease(d3.easeLinear)
         .style("top", (d, i) => `${i * ROW_H}px`).style("opacity", 1);
-      sel.select(".fill").transition("w").duration(dur).ease(d3.easeLinear).style("width", d => `${w(d.share)}%`);
+      sel.select(".fill").transition("w").duration(dur).ease(d3.easeLinear).style("width", d => `${w(d.val)}%`);
     });
     const topShare = total ? d3.sum(top, d => d.n) / total : 0;
-    d3.select("#top10-sub").text(`Share of complaints, Jan 2000 – ${fmtMonth(kdate(act1.cursor))} · hover to find on map`);
-    d3.select("#top10-note").html(`So far, these 10 precincts account for <b style="color:var(--text-primary)">${pct(topShare)}</b> of all complaints. An even split would give them 13%.`);
+    d3.select("#top10-sub").text(`${M().sub(act1.cursor)} · hover to find on map`);
+    d3.select("#race-title").text(act1.window === 12 ? "Top 10 precincts, past year" : act1.window ? `Top 10 precincts, past ${act1.window / 12} years` : "Top 10 precincts, running total since 2000");
+    d3.select("#top10-note").html(act1.metric === "share"
+      ? `In this window, these 10 precincts account for <b style="color:var(--text-primary)">${pct(topShare)}</b> of all complaints. An even split would give them 13%.`
+      : `Ranked by complaints per resident, so a precinct can't rank high just by being big. These 10 still account for <b style="color:var(--text-primary)">${pct(topShare)}</b> of the window's complaints.` +
+        (top.some(d => COMMERCIAL.has(d.p)) ? ` <span style="color:var(--text-muted)">* Commercial district: few residents but many workers and visitors, so its rate is inflated.</span>` : ""));
   }
 
-  // ---- Act 1 timeline (monthly counts; shaded = months included in the running total) ----
+  // ---- Act 1 timeline (monthly counts; shaded = months inside the current window) ----
   const TW = 760, TH = 132, tm = { t: 30, r: 8, b: 22, l: 34 };
   const tl = d3.select("#timeline").attr("viewBox", `0 0 ${TW} ${TH}`);
   const tx = d3.scaleTime().domain([START, END]).range([tm.l, TW - tm.r]);
@@ -690,7 +750,8 @@
   function moveCursor() {
     const d = series.find(s => s.k === act1.cursor);
     if (!d) return;
-    tClip.attr("width", Math.max(0, tx(d.date) - tm.l));
+    const x0 = tx(kdate(winStart(act1.cursor)));
+    tClip.attr("x", x0).attr("width", Math.max(2, tx(d.date) - x0));
     tCur.attr("x1", tx(d.date)).attr("x2", tx(d.date)).attr("stroke", css("--text-primary"));
     tDot.attr("cx", tx(d.date)).attr("cy", ty(d.n)).attr("fill", css("--text-primary")).attr("stroke", css("--surface-1"));
   }
@@ -723,6 +784,21 @@
       if (act1.cats.has(k)) { if (act1.cats.size > 1) act1.cats.delete(k); } else act1.cats.add(k);
       chips.attr("aria-pressed", d => act1.cats.has(d[0]));
       refilter1(); renderTimeline(); render1(250);
+    });
+  document.getElementById("window").onchange = e => {
+    act1.window = +e.target.value;
+    computeVmax();
+    prevRank = new Map(); moves.clear();   // a window change isn't a rank change; don't show arrows for it
+    render1(600);
+  };
+  // share vs per-resident switch: re-ranks and recolors in place (works while paused or playing)
+  const metricBtns = d3.select("#metric").selectAll("button").data(Object.entries(METRICS)).join("button")
+    .text(([, m]) => m.btn).attr("aria-pressed", ([k]) => k === act1.metric)
+    .on("click", (ev, [k]) => {
+      act1.metric = k;
+      metricBtns.attr("aria-pressed", ([key]) => key === act1.metric);
+      prevRank = new Map(); moves.clear();   // a metric switch isn't a rank change; don't show arrows for it
+      render1(600);
     });
 
   hlListeners.push(p => {
@@ -780,6 +856,7 @@
     .on("mousemove", (ev, f) => {
       const p = +f.properties.precinct, s = stats.get(p);
       highlight(p); showSide(p);
+      if (m2 !== "rate") return showTip(ev, m2Tip(p, s));
       showTip(ev, s && s.n >= MIN_N
         ? `<b>${pname(p)}</b><br>${pct(s.rate, 1)} substantiated <span class="muted">(city ${pct(cityRate, 1)})</span><br><span class="muted">${s.n.toLocaleString()} allegations${s.income ? ` · median income ${usd(s.income)}` : ""}</span>`
         : `<b>${pname(p)}</b><br><span class="muted">Too few allegations to rate (${s ? s.n : 0})</span>`);
@@ -789,11 +866,64 @@
   const labels2 = map2.append("g");
   let pinned = null;
 
-  function render2() {
+  // Per-resident modes share ONE scale so "upheld" and "not upheld" can be compared by eye (not upheld ≈ 3× upheld).
+  const resPrecincts = [...stats.values()].filter(s => hasPop(s.p) && s.noPer10k != null);
+  const perMax = d3.max(resPrecincts, s => s.noPer10k);
+  const resPop = d3.sum(resPrecincts, s => s.pop);
+  const M2 = {
+    rate: { btn: "Substantiation rate", title: "Substantiation rate vs. city average, by precinct",
+      sub: "Share of allegations substantiated, 2000–2019 · hover or click a precinct" },
+    up: { btn: "Upheld per resident", get: s => s.upPer10k, hi: "--div-hi", word: "upheld",
+      title: "Upheld allegations per resident, by precinct",
+      sub: "Substantiated allegations per 10,000 residents per year, 2000–2019 · same scale as “not upheld”",
+      city: d3.sum(resPrecincts, s => s.outc.Substantiated) / resPop * 10000 / YEARS },
+    no: { btn: "Not upheld per resident", get: s => s.noPer10k, hi: "--div-lo", word: "not upheld",
+      title: "Allegations not upheld per resident, by precinct",
+      sub: "Allegations exonerated or unsubstantiated per 10,000 residents per year, 2000–2019 · same scale as “upheld”",
+      city: d3.sum(resPrecincts, s => s.n - s.outc.Substantiated) / resPop * 10000 / YEARS },
+  };
+  let m2 = "rate";
+  const m2Tip = (p, s) => {
+    const m = M2[m2];
+    if (!s || !hasPop(p)) return `<b>${pname(p)}</b><br><span class="muted">Almost no residents, so no per-resident rate</span>`;
+    return `<b>${pname(p)}</b><br>${m.get(s).toFixed(1)} ${m.word} allegations per 10,000 residents a year <span class="muted">(city ${m.city.toFixed(1)})</span>` +
+      `<br><span class="muted">${(m2 === "up" ? s.outc.Substantiated : s.n - s.outc.Substantiated).toLocaleString()} of ${s.n.toLocaleString()} allegations · ${Math.round(s.pop / 1000)}k residents</span>` +
+      (COMMERCIAL.has(p) ? `<br><span class="muted">Few residents but many workers and visitors, so this rate is inflated.</span>` : "");
+  };
+  const m2Btns = d3.select("#m2-mode").selectAll("button").data(Object.entries(M2)).join("button")
+    .text(([, m]) => m.btn).attr("aria-pressed", ([k]) => k === m2)
+    .on("click", (ev, [k]) => { m2 = k; m2Btns.attr("aria-pressed", ([key]) => key === m2); render2(500); });
+  {
+    const top = [...resPrecincts].sort((a, b) => b.noPer10k - a.noPer10k)[0], ues = stats.get(19);
+    d3.select("#m2-note").html(`In <b>${HOOD[top.p]}</b>, ${top.noPer10k.toFixed(1)} allegations per 10,000 residents a year end without being upheld, ` +
+      `${Math.round(top.noPer10k / ues.noPer10k)}× the rate on the Upper East Side (${ues.noPer10k.toFixed(2)}).`);
+  }
+
+  function render2(dur = 0) {
+    d3.select("#m2-title").text(M2[m2].title);
+    d3.select("#m2-sub").text(M2[m2].sub);
+    if (m2 !== "rate") {
+      const m = M2[m2];
+      const seq = d3.scaleSequential(d3.interpolateRgb(css("--div-mid"), css(m.hi))).domain([0, perMax]).clamp(true);
+      p2.transition("fill").duration(dur).attr("fill", f => {
+        const s = stats.get(+f.properties.precinct);
+        return s && hasPop(s.p) && m.get(s) != null ? seq(m.get(s)) : css("--nodata");
+      });
+      const items = [...resPrecincts].sort((a, b) => m.get(b) - m.get(a))
+        .map((s, i) => ({ p: s.p, text: `${HOOD[s.p]} ${m.get(s).toFixed(1)}${COMMERCIAL.has(s.p) ? "*" : ""}`, minor: i >= 6 }));
+      placeLabels(labels2, items, 18);
+      d3.select("#legend2").html(
+        `<span>0<span class="ramp" style="background:linear-gradient(to right,var(--div-mid),var(${m.hi}))"></span>${perMax.toFixed(1)}</span>` +
+        `<span>${m.word[0].toUpperCase() + m.word.slice(1)} allegations per 10,000 residents per year · city average ${m.city.toFixed(1)}</span>` +
+        `<span><span class="sw" style="background:var(--nodata);border:1px solid var(--border)"></span>Almost no residents</span>` +
+        `<span>* Commercial district: few residents, so the rate is inflated</span>`
+      );
+      return;
+    }
     divScale = d3.scaleDiverging()
       .domain([cityRate - span, cityRate, cityRate + span])
       .interpolator(t => t < 0.5 ? d3.interpolateRgb(css("--div-lo"), css("--div-mid"))(t * 2) : d3.interpolateRgb(css("--div-mid"), css("--div-hi"))((t - 0.5) * 2));
-    p2.attr("fill", f => { const s = stats.get(+f.properties.precinct); return s && s.n >= MIN_N ? divScale(s.rate) : css("--nodata"); });
+    p2.transition("fill").duration(dur).attr("fill", f => { const s = stats.get(+f.properties.precinct); return s && s.n >= MIN_N ? divScale(s.rate) : css("--nodata"); });
     // Label the precincts that stray furthest from the city average (weighted by size so tiny precincts
     // don't dominate), East New York first since the story keeps returning to it.
     const notable = [...reliable].sort((a, b) => Math.abs(b.rate - cityRate) * Math.sqrt(b.n) - Math.abs(a.rate - cityRate) * Math.sqrt(a.n));
@@ -818,7 +948,7 @@
     d3.select("#side-rate").html(`${pct(rate)} <small>substantiated${isCity ? "" : ` · ${diff >= 0 ? "+" : "−"}${Math.abs(diff * 100).toFixed(1)} pts vs. city`}</small>`);
     const sp = isCity ? null : stats.get(p);
     d3.select("#side-demo").html(sp && sp.income
-      ? `Median household income <b>${usd(sp.income)}</b> · ${Math.round(sp.pop / 1000)}k residents · <b>${sp.per10k.toFixed(1)}</b> complaints per 10k residents a year`
+      ? `Median household income <b>${usd(sp.income)}</b> · ${Math.round(sp.pop / 1000)}k residents<br>Per 10k residents a year: <b>${sp.per10k.toFixed(1)}</b> complaints · <b>${sp.upPer10k.toFixed(1)}</b> allegations upheld · <b>${sp.noPer10k.toFixed(1)}</b> not upheld`
       : isCity ? `Citywide: <b>${(totalComplaints / d3.sum([...stats.values()], s => s.pop || 0) * 10000 / YEARS).toFixed(1)}</b> complaints per 10k residents a year` : "");
     d3.select("#side-stack").html(OUTCOMES.map(o => `<div style="width:${outc[o.key] / n * 100}%;background:var(${o.color})" title="${o.key}"></div>`).join(""));
     d3.select("#side-stack-legend").html(OUTCOMES.map(o => `<span><span class="sw" style="background:var(${o.color})"></span>${o.key} ${pct(outc[o.key] / n)}</span>`).join(""));
