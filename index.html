@@ -3,79 +3,160 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Complaints Across NYC</title>
+<title>Where You Report Matters</title>
+<meta name="description" content="What happens when you report police misconduct in New York City? The answer may depend heavily on where you call home.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <nav class="site-nav" aria-label="Pages">
   <div class="site-nav-inner">
     <span class="site-name">NYPD Complaints</span>
-    <a href="index.html" aria-current="page">Explore</a>
+    <a href="index.html" aria-current="page">Story</a>
     <a href="proposal.html">Proposal</a>
   </div>
 </nav>
 <main>
 
+  <!-- ============ OPENING ============ -->
   <header class="hero">
     <p class="kicker">NYPD civilian complaints, 2000–2019</p>
-    <h1>Where complaints pile up, they're less likely to stick</h1>
-    <p>Between 2000 and 2019, New Yorkers filed <strong id="h-total">—</strong> complaints with the Civilian Complaint Review Board (CCRB) against the officers in this dataset. They weren't spread evenly. <strong id="h-top10">—</strong> of them came from just 10 of the city's 77 precincts.</p>
-    <p>This page looks at three things: <strong>where</strong> complaints come from, <strong>what happened</strong> once they were filed, and <strong>why</strong> the outcome might depend on where you live.</p>
+    <h1>What happens when you report police misconduct in New York City?</h1>
+    <p class="deck">The answer may depend heavily on where you call home.</p>
+    <p class="byline">By Aidan Sanchez, Anirudh Yetikuri and Jack Keeton</p>
+    <p class="dateline">Final project, DSC 209R · Data: ProPublica, NYC Civilian Complaint Review Board</p>
+
+    <div class="home-box">
+      <label for="home-hero">Where do you call home?</label>
+      <select id="home-hero" class="home-select" aria-describedby="you-hero"></select>
+      <p id="you-hero" class="home-note"></p>
+    </div>
   </header>
 
-  <!-- ============ ACT 1: WHERE ============ -->
+  <div class="prose">
+    <p class="lede">Any New Yorker who believes a police officer abused their authority, used excessive force or treated them with discourtesy can file a complaint with the <strong>Civilian Complaint Review Board</strong>, an independent city agency that investigates each allegation and rules on it.</p>
+    <p>Between 2000 and 2019, the officers in this record drew <strong id="h-total">—</strong> complaints. They did not come evenly from across the city.</p>
+  </div>
+
+  <!-- ============ WHERE (and) ============ -->
   <section class="act" id="act1">
-    <div class="act-head">
-      <div class="act-num">1 · Where</div>
-      <h2>A handful of neighborhoods carry most of the complaints</h2>
-      <p>Each precinct is shaded by its <strong>share of the city's complaints over the last three years</strong>, a window that slides forward as the animation plays. Use the Window menu to shorten it, or pick "Since 2000" for the full running total. Notes on the timeline mark turning points in NYPD policing. Watch <strong>East New York</strong> take the top spot in the mid-2000s and hold it for a decade, <strong>St. George</strong> enter the top five in 2012–2014 (the window that includes Eric Garner's death), and <strong>Mott Haven</strong> climb after 2015.</p>
-      <p>Switch to <strong>per resident</strong> to check that this isn't just a population map. Over the full 20 years, Brownsville, Bed-Stuy, and East New York still lead, and Harlem and East Harlem move up.</p>
+    <div class="prose">
+      <p class="section-kicker">Where complaints come from</p>
+      <h2>A few neighborhoods file far more than their share</h2>
+      <p>Measured per resident, so a precinct can't rank high just by being big, the 10 neighborhoods with the most complaints filed <strong id="h-ratio">—</strong> as many per person as the rest of the city. <span id="h-boros">—</span>.</p>
+      <p>Press play to watch two decades unfold. The map shades each precinct by complaints per resident over the five years before each month. Beside it, a line traces every neighborhood, with the current leaders in teal.</p>
+      <p id="you-act1" class="you-line" style="display:none"></p>
     </div>
 
-    <div class="controls">
-      <div class="controls seg" id="metric" role="group" aria-label="Map measure" style="margin:0"></div>
-      <button id="play" class="primary">Play</button>
-      <label>Window
-        <select id="window">
-          <option value="12">1 year</option>
-          <option value="36" selected>3 years</option>
-          <option value="60">5 years</option>
-          <option value="0">Since 2000</option>
-        </select>
-      </label>
-      <label>Speed
-        <select id="speed"><option value="700">Slow</option><option value="300" selected>Normal</option><option value="120">Fast</option></select>
-      </label>
-      <span style="color:var(--text-secondary);font-size:13px">Show:</span>
-      <div id="chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-    </div>
-
-    <div class="grid-2">
-      <div class="card map-wrap">
-        <div class="clock"><div class="month" id="clock-month">—</div><div class="count" id="clock-count"></div><div class="event" id="clock-event" style="display:none"></div></div>
-        <svg id="map1" role="img" aria-label="Map of NYC precincts shaded by their share of complaints since 2000"></svg>
-        <div class="legend" id="legend1"></div>
-        <svg id="timeline" role="img" aria-label="Complaints received per month, 2000–2019" style="margin-top:12px"></svg>
+    <div class="figure wide">
+      <div class="controls">
+        <button id="play" class="primary">Play</button>
+        <label>Window
+          <select id="window">
+            <option value="36">3 years</option>
+            <option value="60" selected>5 years</option>
+            <option value="0">Since 2000</option>
+          </select>
+        </label>
+        <label>Speed
+          <select id="speed"><option value="700">Slow</option><option value="300" selected>Normal</option><option value="120">Fast</option></select>
+        </label>
+        <span class="ctl-text">Show:</span>
+        <div id="chips" class="chip-row"></div>
       </div>
-      <div class="card">
-        <h3 class="fig-title" id="race-title">Top 10 precincts</h3>
-        <p class="fig-sub" id="top10-sub"></p>
-        <div class="race" id="top10"></div>
-        <p class="fig-sub" id="top10-note" style="margin-top:12px"></p>
+
+      <div class="act1-fig">
+        <div class="map-wrap">
+          <div class="clock"><div class="month" id="clock-month">—</div><div class="count" id="clock-count"></div><div class="event" id="clock-event" style="display:none"></div></div>
+          <svg id="map1" role="img" aria-label="Map of NYC precincts shaded by complaints per resident"></svg>
+          <div class="legend" id="legend1"></div>
+        </div>
+
+        <div class="act1-side">
+          <div>
+            <h3 class="fig-title">Time window</h3>
+            <p class="fig-sub">Complaints received each month, citywide. The shaded band is the window shown; click or drag to move it.</p>
+            <svg id="timeline" role="img" aria-label="Complaints received per month, 2000–2019"></svg>
+          </div>
+
+          <div class="fig-part">
+            <h3 class="fig-title">Complaints per resident over time</h3>
+            <p class="fig-sub" id="trend-sub"></p>
+            <div class="controls trend-controls" role="group" aria-label="Trend focus">
+              <div class="seg" id="trend-top" role="group" aria-label="Highlight the highest precincts"></div>
+              <select id="trend-boro" aria-label="Borough"></select>
+              <select id="trend-smooth" aria-label="Smoothing">
+                <option value="1">No smoothing</option>
+                <option value="6">6-month average</option>
+                <option value="12">12-month average</option>
+              </select>
+              <label><input type="checkbox" id="trend-commercial"> Skip commercial districts</label>
+              <input type="search" id="trend-search" list="trend-hoods" placeholder="Pin a neighborhood or precinct #" aria-label="Pin a neighborhood" autocomplete="off">
+              <datalist id="trend-hoods"></datalist>
+              <div class="pins" id="trend-pins" aria-label="Pinned precincts"></div>
+            </div>
+            <svg id="trend" role="img" aria-label="Line chart of complaints per resident over time for every precinct, with the highest and pinned precincts highlighted"></svg>
+            <div class="legend" id="trend-legend"></div>
+            <p class="fig-sub" style="margin-top:6px">Hover a line or map precinct to follow it; click one to pin it. Click empty space in the lines to jump to that month.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ ACT 2: WHAT HAPPENED NEXT ============ -->
+  <p class="section-break" aria-hidden="true">◆</p>
+
+  <!-- ============ WHAT HAPPENS NEXT (but) ============ -->
   <section class="act" id="act2">
-    <div class="act-head">
-      <div class="act-num">2 · What happened next</div>
-      <h2>Most allegations are never substantiated, and force is the hardest to prove</h2>
-      <p>For each allegation the CCRB reaches one of three findings. <strong>Substantiated:</strong> the officer did it and it was misconduct. <strong>Exonerated:</strong> it happened but was within NYPD rules. <strong>Unsubstantiated:</strong> there wasn't enough evidence to decide.</p>
+    <div class="prose">
+      <p class="section-kicker">What happens next</p>
+      <h2>Every complaint gets a ruling. Not every neighborhood gets the same ones.</h2>
+      <p>For each allegation, the board reaches one of three findings. <strong class="k-sub">Substantiated</strong> means the officer did it and it was misconduct. <strong class="k-exon">Exonerated</strong> means it happened but was within NYPD rules. <strong class="k-unsub">Unsubstantiated</strong> means there wasn't enough evidence to decide.</p>
+      <p>If the process worked the same everywhere, the share of complaints upheld would look about the same from one precinct to the next. Before you see how it actually plays out, make a guess.</p>
     </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <h3 class="fig-title">CCRB findings by allegation type</h3>
+    <div class="figure wide">
+      <div class="grid-2">
+        <div>
+          <div class="guess-prompt" id="guess-prompt">
+            <p><b>Which precinct do you think had its complaints upheld most often?</b> Click it on the map.</p>
+            <button id="guess-skip" class="link-btn">Skip and show me</button>
+          </div>
+          <div id="m2-head" style="display:none">
+            <h3 class="fig-title" id="m2-title">Substantiation rate vs. city average, by precinct</h3>
+            <p class="fig-sub" id="m2-sub"></p>
+            <div class="controls seg" id="m2-mode" role="group" aria-label="Map measure"></div>
+          </div>
+          <svg id="map2" role="img" aria-label="Map of substantiation rate by precinct relative to city average"></svg>
+          <div class="legend" id="legend2"></div>
+        </div>
+        <div>
+          <div class="guess-result" id="guess-result" style="display:none" aria-live="polite"></div>
+          <div class="side locked" id="side">
+            <h3 id="side-title">—</h3>
+            <p class="sub" id="side-sub"></p>
+            <div class="bignum" id="side-rate">—</div>
+            <p class="demo" id="side-demo"></p>
+            <h4>Findings</h4>
+            <div class="stackbar" id="side-stack"></div>
+            <div class="legend" id="side-stack-legend"></div>
+            <h4>Most common allegations</h4>
+            <div class="bars" id="side-top"></div>
+            <div class="side-lock">Revealed after your guess</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>Switch the map to <strong>per resident</strong> to see how many allegations each neighborhood is left with. <span id="m2-note"></span></p>
+      <p>Part of what decides an outcome is the kind of complaint. Force, the most serious, is the hardest to prove: most force allegations end with the officer cleared or the case unresolved.</p>
+    </div>
+
+    <div class="figure">
+      <h3 class="fig-title">How the board ruled, by type of allegation</h3>
       <p class="fig-sub">Share of allegations, 2000–2019</p>
       <svg id="outcomes" role="img" aria-label="Stacked bars of CCRB findings by allegation type"></svg>
       <div class="legend">
@@ -84,99 +165,82 @@
         <span><span class="sw" style="background:var(--unsub)"></span>Unsubstantiated</span>
       </div>
     </div>
-
-    <div class="act-head prose">
-      <p>Now map the substantiation rate. If outcomes didn't depend on location, the map would be a flat gray. It isn't: <strong>red precincts have their allegations upheld less often than the city average</strong>, and many of them are the same precincts that lit up in Act 1.</p>
-      <p>Then switch to <strong>per resident</strong> to see how many allegations each neighborhood is left with. <span id="m2-note"></span></p>
-    </div>
-
-    <div class="grid-2">
-      <div class="card">
-        <h3 class="fig-title" id="m2-title">Substantiation rate vs. city average, by precinct</h3>
-        <p class="fig-sub" id="m2-sub">Share of allegations substantiated, 2000–2019 · hover or click a precinct</p>
-        <div class="controls seg" id="m2-mode" role="group" aria-label="Map measure"></div>
-        <svg id="map2" role="img" aria-label="Map of substantiation rate by precinct relative to city average"></svg>
-        <div class="legend" id="legend2"></div>
-      </div>
-      <div class="card side" id="side">
-        <h3 id="side-title">—</h3>
-        <p class="sub" id="side-sub"></p>
-        <div class="bignum" id="side-rate">—</div>
-        <p class="demo" id="side-demo"></p>
-        <h4>Findings</h4>
-        <div class="stackbar" id="side-stack"></div>
-        <div class="legend" id="side-stack-legend"></div>
-        <h4>Most common allegations</h4>
-        <div class="bars" id="side-top"></div>
-      </div>
-    </div>
   </section>
 
-  <!-- ============ ACT 3: WHY ============ -->
+  <p class="section-break" aria-hidden="true">◆</p>
+
+  <!-- ============ WHY (therefore) ============ -->
   <section class="act" id="act3">
-    <div class="act-head">
-      <div class="act-num">3 · Why might this be?</div>
-      <h2>The busier the precinct, the lower the odds a complaint is upheld</h2>
-      <p>Each dot below is a precinct. Precincts with more complaints tend to have <em>lower</em> substantiation rates. The correlation is <strong id="r-val">—</strong>. Switch the x-axis to check whether that's just bigger precincts having more people (it isn't), and to see how it lines up with neighborhood income. This dataset can't prove why, but it can rule some explanations out and point toward others.</p>
+    <div class="prose">
+      <p class="section-kicker">Why it might be</p>
+      <h2>The busier the precinct, the lower the odds</h2>
+      <p>You might expect the opposite. If a precinct draws far more complaints, there would seem to be more misconduct to find. Instead, each additional complaint is <em>less</em> likely to be upheld (<strong id="r-val">—</strong>). Switch the x-axis to check that this isn't just bigger precincts having more people, and to see how it lines up with income.</p>
     </div>
 
-    <div class="grid-halves">
-      <div class="card">
-        <h3 class="fig-title" id="sc-title">Complaint volume vs. substantiation rate</h3>
-        <p class="fig-sub">One dot per precinct with ≥ 100 allegations · hover links to the map above</p>
-        <div class="controls seg" id="sc-mode" role="group" aria-label="Scatter x-axis"></div>
-        <svg id="scatter" role="img" aria-label="Scatter plot of a precinct measure against substantiation rate"></svg>
-      </div>
-      <div class="card">
-        <h3 class="fig-title" id="db-title">Busiest vs. quietest precincts</h3>
-        <p class="fig-sub" id="db-sub">The quarter of precincts with the most complaints vs. the quarter with the fewest</p>
-        <div class="controls seg" id="db-mode" role="group" aria-label="Group precincts by"></div>
-        <svg id="dumbbell" role="img" aria-label="Comparison of two precinct quartiles on three measures"></svg>
-        <div class="legend">
-          <span><span class="sw round" style="background:var(--text-primary)"></span><span id="db-leg-a">Busiest quarter</span></span>
-          <span><span class="sw round" style="background:var(--surface-1);box-shadow:inset 0 0 0 1.5px var(--text-primary)"></span><span id="db-leg-b">Quietest quarter</span></span>
+    <div class="figure wide">
+      <div class="grid-halves">
+        <div>
+          <h3 class="fig-title" id="sc-title">Complaint volume vs. substantiation rate</h3>
+          <p class="fig-sub">One dot per precinct with at least 100 allegations · hover links to the map above</p>
+          <div class="controls seg" id="sc-mode" role="group" aria-label="Scatter x-axis"></div>
+          <svg id="scatter" role="img" aria-label="Scatter plot of a precinct measure against substantiation rate"></svg>
         </div>
-        <p class="fig-sub" id="db-note" style="margin-top:8px"></p>
+        <div>
+          <h3 class="fig-title" id="db-title">Busiest vs. quietest precincts</h3>
+          <p class="fig-sub" id="db-sub">The quarter of precincts with the most complaints vs. the quarter with the fewest</p>
+          <div class="controls seg" id="db-mode" role="group" aria-label="Group precincts by"></div>
+          <svg id="dumbbell" role="img" aria-label="Comparison of two precinct quartiles on three measures"></svg>
+          <div class="legend">
+            <span><span class="sw round" style="background:var(--text-primary)"></span><span id="db-leg-a">Busiest quarter</span></span>
+            <span><span class="sw round" style="background:var(--surface-1);box-shadow:inset 0 0 0 1.5px var(--text-primary)"></span><span id="db-leg-b">Quietest quarter</span></span>
+          </div>
+          <p class="fig-sub" id="db-note" style="margin-top:8px"></p>
+        </div>
       </div>
     </div>
 
-    <div class="callouts">
-      <div class="callout">
-        <h4>Not the type of allegation</h4>
-        <p id="why-mix">—</p>
-      </div>
-      <div class="callout">
-        <h4>Who is complaining</h4>
-        <p id="why-race">—</p>
-      </div>
-      <div class="callout">
-        <h4>Neighborhood income</h4>
-        <p id="why-income">—</p>
-      </div>
-      <div class="callout">
-        <h4>What we can't see yet: policing intensity</h4>
-        <p>Precincts that get more stops and searches have more encounters that end in disputed accounts, often with no witnesses or video. The CCRB can't substantiate those. Testing this means joining per-precinct stop and arrest counts, which this dataset doesn't include.</p>
+    <div class="prose">
+      <p>This record can't prove why. It can rule some explanations out and point toward others.</p>
+      <div class="callouts">
+        <div class="callout"><h4>Not the type of complaint</h4><p id="why-mix">—</p></div>
+        <div class="callout"><h4>Neighborhood income</h4><p id="why-income">—</p></div>
+        <div class="callout"><h4>What we can't see: how heavily a place is policed</h4><p>More stops mean more encounters that end in disputed accounts with no witnesses or video, which the board can't substantiate. Testing that requires per-precinct stop counts this record lacks.</p></div>
       </div>
     </div>
   </section>
 
-  <section class="takeaway">
-    <div class="act-num">Takeaway</div>
-    <h2>The neighborhoods that complain the most get the least resolution</h2>
-    <p>Complaints are concentrated in a few predominantly Black and Latino precincts. Allegations from those precincts are <strong id="t-gap">—</strong> less likely to be substantiated than allegations from the city's quietest precincts. The type of allegation doesn't explain the gap. Income follows the same pattern: <span id="t-income"></span> A New Yorker's chance of having a complaint upheld seems to depend partly on where they live.</p>
+  <p class="section-break" aria-hidden="true">◆</p>
+
+  <!-- ============ WHAT IT MEANS ============ -->
+  <section class="act takeaway">
+    <div class="prose">
+      <p class="section-kicker">What it means</p>
+      <h2>Your address shapes whether oversight works for you</h2>
+      <p>Complaints concentrate in a handful of neighborhoods, and those are the places where complaints are least likely to be upheld. Allegations from the busiest precincts are <strong id="t-gap">—</strong> less likely to be substantiated than those from the quietest. The type of complaint doesn't explain the gap, and income follows the same pattern.</p>
+      <p>So the answer to the question we started with depends, in part, on where you call home.</p>
+      <p id="you-takeaway" class="you-line" style="display:none"></p>
+      <div class="home-box inline">
+        <label for="home-end">Compare another neighborhood:</label>
+        <select id="home-end" class="home-select"></select>
+      </div>
+    </div>
   </section>
 
-  <section class="act" style="margin-top:48px">
-    <div class="act-num" style="margin-bottom:8px">About the data</div>
-    <ul class="notes">
-      <li><strong>Source:</strong> <a href="https://projects.propublica.org/nypd-ccrb/">ProPublica's release of NYC CCRB records</a> (Sept 1985 – Jan 2020). Precinct boundaries come from <a href="https://data.cityofnewyork.us/d/y76i-bdw7">NYC Open Data</a>. This page uses complaints received from 2000 to 2019, because earlier years are sparse.</li>
-      <li><strong>This is not every complaint.</strong> The release only covers officers who were still on the force in 2020 and had at least one substantiated allegation. That pushes the substantiation rates here above the CCRB's true overall rate, so compare precincts with each other, not with outside figures.</li>
-      <li><strong>Units:</strong> a complaint can include several allegations against several officers. Act 1 counts complaints. Acts 2 and 3 count allegations, since the CCRB rules on each one separately.</li>
-      <li><strong>Location and time:</strong> the data only records the precinct and the month received, so Act 1 adds up complaints by precinct and month.</li>
-      <li><strong>Income and population</strong> come from the Census Bureau's <a href="https://censusreporter.org/tables/B19001/">American Community Survey, 2020–2024 5-year estimates</a> (tables B19001 and B01003). Census tracts don't line up with precincts, so each tract is assigned to the precinct that contains its center point. Income bracket counts are summed per precinct and the median is estimated from the combined distribution, top-coded at $200k. These figures postdate the complaints (2000–2019), and some neighborhoods have gentrified since, so treat income as a rough, present-day picture.</li>
-      <li>Act 1 and Act 2 use raw counts. "Per resident" figures in Act 3 divide by the precinct's residential population, which understates how many people pass through commercial areas like Midtown. Precincts with fewer than 100 allegations are grayed out in Act 2 and left out of Act 3, because their rates are too noisy.</li>
-    </ul>
-    <p id="status" class="notes"></p>
+  <!-- ============ ABOUT THE DATA ============ -->
+  <section class="about">
+    <div class="prose">
+      <p class="section-kicker">About the data</p>
+      <ul class="notes">
+        <li><strong>Source:</strong> <a href="https://projects.propublica.org/nypd-ccrb/">ProPublica's release of NYC CCRB records</a> (Sept 1985 – Jan 2020). Precinct boundaries come from <a href="https://data.cityofnewyork.us/d/y76i-bdw7">NYC Open Data</a>. This story uses complaints received from 2000 to 2019, because earlier years are sparse.</li>
+        <li><strong>This is not every complaint.</strong> The release only covers officers who were still on the force in 2020 and had at least one substantiated allegation. That pushes the substantiation rates here above the board's true overall rate, so compare precincts with each other, not with outside figures.</li>
+        <li><strong>Units:</strong> a complaint can include several allegations against several officers. The first section counts complaints; the later sections count allegations, since the board rules on each one separately.</li>
+        <li><strong>Location and time:</strong> the data only records the precinct and the month received, so complaints are added up by precinct and month.</li>
+        <li><strong>Income and population</strong> come from the Census Bureau's <a href="https://censusreporter.org/tables/B19001/">American Community Survey, 2020–2024 5-year estimates</a> (tables B19001 and B01003). Census tracts don't line up with precincts, so each tract is assigned to the precinct that contains its center point. The median is estimated from combined income brackets, top-coded at $200k. These figures postdate the complaints, and some neighborhoods have gentrified since, so treat income as a rough, present-day picture.</li>
+        <li><strong>Per resident</strong> figures divide by the precinct's residential population, which understates how many people pass through commercial areas like Midtown. Precincts with fewer than 100 allegations are grayed out or left out of substantiation-rate views, because their rates are too noisy.</li>
+      </ul>
+      <!-- Further reading / outside sources go here as they're gathered. -->
+      <p id="status" class="notes"></p>
+    </div>
   </section>
 </main>
 

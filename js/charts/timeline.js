@@ -8,15 +8,15 @@ import { showTip, hideTip } from "../ui/tooltip.js";
  * @param {Array}  events  EVENTS from config
  * @param {(k:number)=>void} onScrub  called with a month key when the user clicks/drags
  */
-export function createTimeline({ el, events, onScrub }) {
-  const TW = 760, TH = 132, tm = { t: 30, r: 8, b: 22, l: 34 };
+export function createTimeline({ el, events, onScrub, width = 760, margin = { l: 34, r: 8 } }) {
+  const TW = width, TH = 112, tm = { t: 30, b: 22, ...margin };
   const svg = d3.select(el).attr("viewBox", `0 0 ${TW} ${TH}`);
   const x = d3.scaleTime().domain([START, END]).range([tm.l, TW - tm.r]);
   const y = d3.scaleLinear().range([TH - tm.b, tm.t]);
 
   const grid = svg.append("g").attr("class", "gridlines").attr("transform", `translate(${tm.l},0)`);
   svg.append("g").attr("class", "axis").attr("transform", `translate(0,${TH - tm.b})`)
-    .call(d3.axisBottom(x).ticks(d3.timeYear.every(2)).tickSizeOuter(0));
+    .call(d3.axisBottom(x).ticks(d3.timeYear.every(4)).tickSizeOuter(0));
   const yAxis = svg.append("g").attr("class", "axis").attr("transform", `translate(${tm.l},0)`);
   const clip = svg.append("clipPath").attr("id", "tl-clip").append("rect").attr("x", tm.l).attr("y", 0).attr("height", TH);
   const area = svg.append("path").attr("clip-path", "url(#tl-clip)").attr("fill-opacity", 0.18);
@@ -26,7 +26,13 @@ export function createTimeline({ el, events, onScrub }) {
   const eventSel = svg.append("g").selectAll("g").data(events).join("g")
     .attr("class", "tl-event").attr("transform", e => `translate(${x(e.date)},0)`);
   eventSel.append("line").attr("y1", (e, i) => i % 2 ? 18 : 8).attr("y2", TH - tm.b);
-  eventSel.append("text").attr("y", (e, i) => i % 2 ? 16 : 6).attr("text-anchor", "middle").text(e => e.short);
+  eventSel.append("text").attr("y", (e, i) => i % 2 ? 16 : 6)
+    .attr("text-anchor", (e, i) => i === 0 ? "end" : i === events.length - 1 ? "start" : "middle")
+    .attr("dx", (e, i) => i === 0 ? 3 : i === events.length - 1 ? -3 : 0).text(e => e.short);
+
+  // name the series in the right gutter when there is room (it sits under the trend chart's labels)
+  if (tm.r > 60) svg.append("text").attr("class", "anno").attr("x", TW - tm.r + 10).attr("y", TH - tm.b - 4)
+    .text("Citywide total");
 
   const cursorLine = svg.append("line").attr("y1", tm.t).attr("y2", TH - tm.b).attr("stroke-width", 1.5);
   const cursorDot = svg.append("circle").attr("r", 4).attr("stroke-width", 2);

@@ -56,7 +56,7 @@ export const COMMERCIAL = new Set([1, 14, 18]);
 // ---- timeline context (facts about policing, not claims drawn from this dataset) ----
 export const EVENTS = [
   { date: new Date(2011, 0, 1), span: 12, short: "Stop-and-frisk peaks", when: "2011",
-    text: "NYPD stop-and-frisk peaks at about 686,000 stops in one year, mostly of Black and Latino New Yorkers." },
+    text: "NYPD stop-and-frisk peaks at about 686,000 stops in one year." },
   { date: new Date(2013, 7, 1), span: 10, short: "Floyd ruling", when: "Aug 2013",
     text: "In <i>Floyd v. City of New York</i>, a federal judge rules the NYPD's stop-and-frisk practices unconstitutional." },
   { date: new Date(2014, 6, 1), span: 12, short: "Eric Garner", p: 120, when: "July 2014",

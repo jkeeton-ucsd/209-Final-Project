@@ -9,6 +9,7 @@ import { createSidePanel } from "./charts/side-panel.js";
 import { initRateMap } from "./charts/rate-map.js";
 import { initScatter } from "./charts/scatter.js";
 import { initDumbbell } from "./charts/dumbbell.js";
+import { initHomePickers } from "./ui/home.js";
 
 async function main() {
   const status = document.getElementById("status");
@@ -39,6 +40,8 @@ async function main() {
     side.restore();
   };
   renderAll();
+  // the reader's neighborhood: any precinct with residents (restores a saved choice, which redraws the charts)
+  initHomePickers([...model.stats.values()].filter(s => model.hasPop(s.p)).map(s => s.p));
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
 
   status.textContent = `${model.alleg.length.toLocaleString()} allegations in ${model.totalComplaints.toLocaleString()} complaints, 2000–2019. ` +

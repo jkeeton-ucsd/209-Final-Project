@@ -29,7 +29,8 @@ export function createMapBase(geo) {
         this.style.display = null;
         const [cx, cy] = centroid.get(d.p);
         let ok = false;
-        if (placed.length < max) for (const dy of [4, -9, 17]) {
+        const fs = parseFloat(getComputedStyle(this).fontSize) || 11;   // offsets scale with the label size
+        if (placed.length < max) for (const dy of [0.35 * fs, -0.8 * fs, 1.55 * fs]) {
           this.setAttribute("x", cx); this.setAttribute("y", cy + dy);
           const b = this.getBBox();
           const box = { x0: b.x - 2, y0: b.y, x1: b.x + b.width + 2, y1: b.y + b.height };

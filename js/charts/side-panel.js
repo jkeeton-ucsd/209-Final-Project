@@ -41,5 +41,7 @@ export function createSidePanel(model) {
     restore: () => show(pinned),
     /** Click toggles a pin on that precinct. */
     togglePin(p) { pinned = pinned === p ? null : p; show(pinned); },
+    /** Pin a precinct outright (e.g. the reader's home neighborhood); null returns to citywide. */
+    pin(p) { pinned = p; show(pinned); },
   };
 }

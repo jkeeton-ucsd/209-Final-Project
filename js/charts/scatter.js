@@ -4,6 +4,7 @@ import { HOOD, pname } from "../config.js";
 import { css, pct, usd, corr } from "../utils.js";
 import { showTip, hideTip } from "../ui/tooltip.js";
 import { highlight, onHighlight } from "../ui/highlight.js";
+import { onHome, getHome } from "../ui/home.js";
 
 const MODES = [
   { key: "volume", btn: "Total complaints", get: s => s.complaints, title: "Complaint volume vs. substantiation rate",
@@ -44,6 +45,20 @@ export function initScatter(model, side) {
     })
     .on("mouseleave", () => { highlight(null); side.restore(); hideTip(); });
   const labels = svg.append("g");
+  // the reader's home neighborhood: a ring around its dot plus a label
+  const homeG = svg.append("g").attr("class", "home-mark").style("display", "none").style("pointer-events", "none");
+  const homeRing = homeG.append("circle").attr("r", 9);
+  const homeLabel = homeG.append("text").attr("class", "map-label home-label");
+  function placeHome(dur = 0) {
+    const s = reliable.find(d => d.p === getHome());
+    homeG.style("display", s ? null : "none");
+    if (!s) return;
+    const cx = x(mode.get(s)), cy = y(s.rate), right = cx > (m.l + SW - m.r) / 2;
+    homeG.raise();
+    homeRing.transition().duration(dur).attr("cx", cx).attr("cy", cy);
+    homeLabel.text(`${HOOD[s.p]} (you)`).attr("text-anchor", right ? "end" : "start")
+      .transition().duration(dur).attr("x", cx + (right ? -13 : 13)).attr("y", cy - 10);
+  }
 
   /** Least-squares fit of rate on log10(x); r is the matching correlation. */
   function fitFor(md) {
@@ -83,6 +98,7 @@ export function initScatter(model, side) {
       .transition().duration(dur)
       .attr("x", s => x(md.get(s)) + (x(md.get(s)) > mid ? -9 : 9)).attr("y", s => y(s.rate) + 4)
       .text(s => HOOD[s.p]);
+    placeHome(dur);
   }
 
   const buttons = d3.select("#sc-mode").selectAll("button").data(MODES).join("button")
@@ -93,6 +109,8 @@ export function initScatter(model, side) {
     dots.attr("r", s => s.p === p ? 8 : 5).attr("stroke", s => s.p === p ? css("--text-primary") : css("--surface-1"));
     dots.filter(s => s.p === p).raise();
   });
+
+  onHome(() => placeHome(0));
 
   return { render, buttons };
 }
