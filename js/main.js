@@ -10,8 +10,10 @@ import { initRateMap } from "./charts/rate-map.js";
 import { initScatter } from "./charts/scatter.js";
 import { initDumbbell } from "./charts/dumbbell.js";
 import { initHomePickers } from "./ui/home.js";
+import { initReveal } from "./ui/reveal.js";
 
 async function main() {
+  initReveal();   // before the data loads, so the opening text eases in right away
   const status = document.getElementById("status");
   let raw;
   try {

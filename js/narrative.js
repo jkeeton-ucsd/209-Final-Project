@@ -21,9 +21,15 @@ export function fillNarrative(model) {
 
   // ---- why ----
   set("#r-val", `r = ${rVol.toFixed(2)}`);
-  set("#why-mix", Math.abs(G.busy.force - G.quiet.force) < 0.02
-    ? `Force, the hardest kind of complaint to prove, is about the same share of allegations in the busiest and quietest precincts (<b>${pct(G.busy.force)}</b> vs. <b>${pct(G.quiet.force)}</b>). Going by complaint type alone, both would be expected to land near <b>${pct(G.busy.expected)}</b> upheld.`
-    : `Force, the hardest kind of complaint to prove, is <b>${pct(G.busy.force)}</b> of allegations in the busiest precincts vs. <b>${pct(G.quiet.force)}</b> in the quietest. Going by complaint type alone, they'd be expected to land near <b>${pct(G.busy.expected)}</b> and <b>${pct(G.quiet.expected)}</b> upheld.`);
+  // within-type comparison (Act 3 dumbbell): how many complaint types the busiest precincts trail in, and by how much
+  const types = Object.keys(G.busy.up);
+  const gaps = types.map(k => G.quiet.up[k] - G.busy.up[k]);
+  const trailing = gaps.filter(g => g > 0).length;
+  const within = trailing === types.length ? "within every type of complaint" : `within ${words[trailing]} of the ${words[types.length]} types of complaint`;
+  set("#callback", `Earlier you saw that force is the hardest complaint to prove everywhere. Split those same rulings by precinct, and the busiest precincts come out lower ${within}.`);
+  const pts = g => Math.round(g * 100);
+  set("#why-mix", `Both groups file a similar mix of complaints, so by type alone they'd both land near <b>${pct(G.busy.expected)}</b> upheld. ` +
+    `Instead the busiest precincts trail ${within}, by <b>${pts(d3.min(gaps))}</b> to <b>${pts(d3.max(gaps))}</b> points.`);
   set("#why-income", `The poorest quarter of precincts files <b>${perResRatio}×</b> as many complaints per resident as the richest, and sees fewer upheld: <b>${pct(GI.poor.rate)}</b> vs. <b>${pct(GI.rich.rate)}</b>.`);
 
   // ---- takeaway ----

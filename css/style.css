@@ -109,7 +109,31 @@ h2 {
   font-family: var(--serif); font-weight: 700; font-size: clamp(26px, 3.4vw, 34px);
   line-height: 1.18; letter-spacing: -0.01em; margin: 0 0 20px;
 }
-.section-break { text-align: center; color: var(--text-muted); font-size: 12px; letter-spacing: 1em; margin: 40px 0 8px; }
+/* section break: a small diamond with hairlines that draw outward when it scrolls into view */
+.section-break {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  color: var(--text-muted); font-size: 11px; margin: 48px auto 8px; max-width: 640px;
+}
+.section-break::before, .section-break::after { content: ""; height: 1px; width: 120px; background: var(--border); }
+.section-break::before { transform-origin: right center; }
+.section-break::after { transform-origin: left center; }
+
+/* ---------- scroll reveals (only once js/ui/reveal.js has run; skipped for reduced motion) ---------- */
+.reveal-on .reveal {
+  opacity: 0; transform: translateY(18px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.6, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.reveal-on .reveal.revealed { opacity: 1; transform: none; }
+/* figures rise a little less, so charts settle rather than float */
+.reveal-on .figure.reveal { transform: translateY(10px); transition-duration: 0.9s, 1s; }
+.reveal-on .figure.reveal.revealed { transform: none; }
+/* section breaks: the diamond fades, the rules draw outward */
+.reveal-on .section-break.reveal { transform: none; }
+.reveal-on .section-break::before, .reveal-on .section-break::after {
+  transform: scaleX(0); transition: transform 1.1s cubic-bezier(0.2, 0.6, 0.2, 1) 0.15s;
+}
+.reveal-on .section-break.revealed::before, .reveal-on .section-break.revealed::after { transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) { .reveal-on .reveal { opacity: 1; transform: none; transition: none; } }
 
 /* figures break out of the reading column */
 .figure { max-width: 900px; margin: 28px auto 44px; }
@@ -278,3 +302,6 @@ p.notes { padding-left: 0; }
 #map1 .map-label.minor { font-size: 14px; }
 #map2 .map-label { font-size: 13px; stroke-width: 3.5px; }
 #map2 .map-label.minor { font-size: 11.5px; }
+.db-head { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; fill: var(--text-muted); }
+.db-city { stroke: var(--text-muted); stroke-width: 1.5; }
+.sw.tick { width: 2px; height: 12px; border-radius: 0; background: var(--text-muted); margin: 0 8px 0 4px; vertical-align: -2px; }

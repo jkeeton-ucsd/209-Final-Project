@@ -39,6 +39,13 @@ export function buildModel({ geo, rows, incomeRows }) {
     const as = alleg.filter(a => a.fado === f);
     return [f, as.filter(a => a.outcome === "Substantiated").length / as.length];
   }));
+  // complaint types as the reader sees them (offensive language folds into discourtesy, as in the Act 1 filters)
+  const TYPES = { abuse: ["Abuse of Authority"], force: ["Force"], disc: ["Discourtesy", "Offensive Language"] };
+  const upheld = as => as.filter(a => a.outcome === "Substantiated").length;
+  const cityUp = Object.fromEntries(Object.entries(TYPES).map(([k, fs]) => {
+    const as = alleg.filter(a => fs.includes(a.fado));
+    return [k, upheld(as) / as.length];
+  }));
   const stats = new Map();
   for (const [p, as] of d3.group(alleg, a => a.precinct)) {
     const n = as.length;
@@ -48,6 +55,9 @@ export function buildModel({ geo, rows, incomeRows }) {
       complaints: new Set(as.map(a => a.cid)).size,
       rate: outc.Substantiated / n,
       force: as.filter(a => a.fado === "Force").length / n,
+      // per type: allegations and how many were upheld (pooled into group rates for Act 3)
+      typeN: Object.fromEntries(Object.entries(TYPES).map(([k, fs]) => [k, as.filter(a => fs.includes(a.fado)).length])),
+      typeUp: Object.fromEntries(Object.entries(TYPES).map(([k, fs]) => [k, upheld(as.filter(a => fs.includes(a.fado)))])),
       top: d3.rollups(as, v => v.length, a => a.allegation).sort((a, b) => b[1] - a[1]).slice(0, 5),
       expected: d3.mean(as, a => fadoRates.get(a.fado)),
     });
@@ -75,6 +85,8 @@ export function buildModel({ geo, rows, incomeRows }) {
   const summarize = grp => ({
     rate: pool(grp, s => s.rate), force: pool(grp, s => s.force), expected: pool(grp, s => s.expected),
     per10k: d3.sum(grp, s => s.complaints) / d3.sum(grp, s => s.pop) * 10000 / YEARS,
+    // substantiation rate within each complaint type, pooled across the group's allegations of that type
+    up: Object.fromEntries(Object.keys(TYPES).map(k => [k, d3.sum(grp, s => s.typeUp[k]) / d3.sum(grp, s => s.typeN[k])])),
     incLo: d3.min(grp, s => s.income), incHi: d3.max(grp, s => s.income), size: grp.length,
   });
   // two ways to split precincts into quarters: by complaint volume, and by median income
@@ -101,7 +113,7 @@ export function buildModel({ geo, rows, incomeRows }) {
   const rateRank = new Map(rated.map((s, i) => [s.p, i + 1]));
 
   return {
-    geo, precinctIds, alleg, complaints, cityRate, fadoRates, stats, POP, hasPop,
+    geo, precinctIds, alleg, complaints, cityRate, cityUp, fadoRates, stats, POP, hasPop,
     reliable, byVol, q, G, GI, rVol, totalComplaints, top10, top10Share,
     byPer, topPer, topPerRatio, topPerBoros, cityPer10k, perRank, rated, rateRank,
   };
