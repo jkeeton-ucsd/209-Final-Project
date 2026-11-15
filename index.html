@@ -22,7 +22,7 @@
 
   <!-- ============ OPENING ============ -->
   <header class="hero">
-    <p class="kicker">NYPD civilian complaints, 2000–2019</p>
+    <p class="kicker">NYPD civilian complaints, 2000-2019</p>
     <h1>What happens when you report police misconduct in New York City?</h1>
     <p class="deck">The answer may depend heavily on where you call home.</p>
     <p class="byline">By Aidan Sanchez, Anirudh Yetikuri and Jack Keeton</p>
@@ -35,18 +35,43 @@
     </div>
   </header>
 
+  <!-- ============ TEMPORARY: initial prototype write-up (remove for the final version) ============ -->
+  <aside class="prototype-note" aria-labelledby="proto-title">
+    <p class="section-kicker">Temporary</p>
+    <h2 id="proto-title">Initial Prototype Write Up</h2>
+
+    <h3>What Have We Done So Far</h3>
+    <ul>
+      <li>We have created visualizations for each of the three parts of our article, as well as interactive features for each.</li>
+      <li>We have added personalization and surprise elements to further engage the audience.</li>
+      <li>We have done preliminary writing of the key points we'd like to hit on during our final article.</li>
+      <li>We have selected a general design style integrating the visualizations, personalization, and writing leaning heavily on the visuals of the New York Times immersive stories.</li>
+    </ul>
+
+    <h3>What Will Be Challenging</h3>
+    <ul>
+      <li>We still need to iterate on our visualizations to find the balance between informative and overwhelming, with so many precincts to cover it can be visually overwhelming.</li>
+      <li>We still need to tie our visualizations together better to make sure the audience gets the story we are trying to tell them cohesively (connecting each of the three sections together to come to the conclusion that the behavior of complaints is worrying); this is difficult due to the scale of the data.</li>
+      <li>We need to research supporting articles to confirm we are not deceiving the audience with false claims, this will be difficult due to the story being about behavior and socio-economic status.</li>
+      <li>We need to determine how much text is needed to drive the story, this is difficult because we are tackling a large issue and want to be sensitive to that without taking away the reader's freedom to deep-dive.</li>
+    </ul>
+  </aside>
+  <!-- ============ END TEMPORARY ============ -->
+
   <div class="prose">
-    <p class="lede">Any New Yorker who believes a police officer abused their authority, used excessive force or treated them with discourtesy can file a complaint with the <strong>Civilian Complaint Review Board</strong>, an independent city agency that investigates each allegation and rules on it.</p>
-    <p>Between 2000 and 2019, the officers in this record drew <strong id="h-total">—</strong> complaints. They did not come evenly from across the city.</p>
+    <p class="lede">Any individual who believes a New York City police officer abused their authority, used excessive force, or treated them with discourtesy can file a complaint with the <strong>Civilian Complaint Review Board</strong>, an independent civilian oversight body that reviews each allegation.</p>
+    <p>Between 2000 and 2019, ProPublica collected <strong id="h-total">—</strong> complaints on officers still on the force in 2020. Complaints did not come evenly from across the city.</p>
   </div>
 
   <!-- ============ WHERE (and) ============ -->
   <section class="act" id="act1">
     <div class="prose">
       <p class="section-kicker">Where complaints come from</p>
-      <h2>A few neighborhoods file far more than their share</h2>
-      <p>Measured per resident, so a precinct can't rank high just by being big, the 10 neighborhoods with the most complaints filed <strong id="h-ratio">—</strong> as many per person as the rest of the city. <span id="h-boros">—</span>.</p>
-      <p>Press play to watch two decades unfold. The map shades each precinct by complaints per resident over the five years before each month. Beside it, a line traces every neighborhood, with the current leaders in teal.</p>
+      <h2>A few neighborhoods file far more than others</h2>
+      <p>Measured per resident, so an area can't rank higher just by being larger, the 10 neighborhoods with the most complaints filed <strong id="h-ratio">—</strong> as many complaints per resident as the rest of the city. <span id="h-boros">—</span>.</p>
+      <p>Press play to display complaints per resident over time. The map shades each precinct by complaints per resident over the five years up to the month. Beside the map, lines will be trced tracking the complaints per resident for the top neighborhoods. You 
+        may also pin a neighborhood or precinct to follow it over time.
+      </p>
       <p id="you-act1" class="you-line" style="display:none"></p>
     </div>
 
@@ -78,7 +103,7 @@
           <div>
             <h3 class="fig-title">Time window</h3>
             <p class="fig-sub">Complaints received each month, citywide. The shaded band is the window shown; click or drag to move it.</p>
-            <svg id="timeline" role="img" aria-label="Complaints received per month, 2000–2019"></svg>
+            <svg id="timeline" role="img" aria-label="Complaints received per month, 2000-2019"></svg>
           </div>
 
           <div class="fig-part">
@@ -157,7 +182,7 @@
 
     <div class="figure">
       <h3 class="fig-title">How the board ruled, by type of allegation</h3>
-      <p class="fig-sub">Share of allegations, 2000–2019</p>
+      <p class="fig-sub">Share of allegations, 2000-2019</p>
       <svg id="outcomes" role="img" aria-label="Stacked bars of CCRB findings by allegation type"></svg>
       <div class="legend">
         <span><span class="sw" style="background:var(--sub)"></span>Substantiated</span>
@@ -233,11 +258,11 @@
     <div class="prose">
       <p class="section-kicker">About the data</p>
       <ul class="notes">
-        <li><strong>Source:</strong> <a href="https://projects.propublica.org/nypd-ccrb/">ProPublica's release of NYC CCRB records</a> (Sept 1985 – Jan 2020). Precinct boundaries come from <a href="https://data.cityofnewyork.us/d/y76i-bdw7">NYC Open Data</a>. This story uses complaints received from 2000 to 2019, because earlier years are sparse.</li>
+        <li><strong>Source:</strong> <a href="https://projects.propublica.org/nypd-ccrb/">ProPublica's release of NYC CCRB records</a> (Sept 1985 - Jan 2020). Precinct boundaries come from <a href="https://data.cityofnewyork.us/d/y76i-bdw7">NYC Open Data</a>. This story uses complaints received from 2000 to 2019, because earlier years are sparse.</li>
         <li><strong>This is not every complaint.</strong> The release only covers officers who were still on the force in 2020 and had at least one substantiated allegation. That pushes the substantiation rates here above the board's true overall rate, so compare precincts with each other, not with outside figures.</li>
         <li><strong>Units:</strong> a complaint can include several allegations against several officers. The first section counts complaints; the later sections count allegations, since the board rules on each one separately.</li>
         <li><strong>Location and time:</strong> the data only records the precinct and the month received, so complaints are added up by precinct and month.</li>
-        <li><strong>Income and population</strong> come from the Census Bureau's <a href="https://censusreporter.org/tables/B19001/">American Community Survey, 2020–2024 5-year estimates</a> (tables B19001 and B01003). Census tracts don't line up with precincts, so each tract is assigned to the precinct that contains its center point. The median is estimated from combined income brackets, top-coded at $200k. These figures postdate the complaints, and some neighborhoods have gentrified since, so treat income as a rough, present-day picture.</li>
+        <li><strong>Income and population</strong> come from the Census Bureau's <a href="https://censusreporter.org/tables/B19001/">American Community Survey, 2020-2024 5-year estimates</a> (tables B19001 and B01003). Census tracts don't line up with precincts, so each tract is assigned to the precinct that contains its center point. The median is estimated from combined income brackets, top-coded at $200k. These figures postdate the complaints, and some neighborhoods have gentrified since, so treat income as a rough, present-day picture.</li>
         <li><strong>Per resident</strong> figures divide by the precinct's residential population, which understates how many people pass through commercial areas like Midtown. Precincts with fewer than 100 allegations are grayed out or left out of substantiation-rate views, because their rates are too noisy.</li>
       </ul>
       <!-- Further reading / outside sources go here as they're gathered. -->

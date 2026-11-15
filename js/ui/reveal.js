@@ -5,7 +5,7 @@ export function initReveal() {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
 
   const targets = document.querySelectorAll(
-    ".hero > *, .prose > :not(.callouts), .callout, .figure, .section-break"
+    ".hero > *, .prose > :not(.callouts), .callout, .figure, .section-break, .prototype-note"
   );
   document.documentElement.classList.add("reveal-on");
 
