@@ -1,12 +1,11 @@
 // Act 3b — dumbbell: compare two quarters of precincts (busiest vs. quietest, or poorest vs. richest)
-// on substantiation rate, force share, and Black complainant share.
+// on substantiation rate and force share.
 import { css, pct } from "../utils.js";
 import { showTip, hideTip } from "../ui/tooltip.js";
 
 const MEASURES = [
   { label: "Allegations substantiated", key: "rate" },
   { label: "Allegations involving force", key: "force" },
-  { label: "From Black complainants", key: "black" },
 ];
 
 export function initDumbbell(model) {
@@ -19,9 +18,11 @@ export function initDumbbell(model) {
   ];
   let mode = MODES[0];
 
-  const DW = 560, DH = 260, m = { t: 24, r: 24, b: 30, l: 170 };
+  const DW = 560, DH = 190, m = { t: 24, r: 24, b: 30, l: 170 };
   const svg = d3.select("#dumbbell").attr("viewBox", `0 0 ${DW} ${DH}`);
-  const x = d3.scaleLinear().domain([0, 0.8]).range([m.l, DW - m.r]);
+  // one fixed scale for both groupings, so switching modes moves the dots rather than the axis
+  const xMax = d3.max(MODES, md => d3.max(MEASURES, d => Math.max(md.a[d.key], md.b[d.key])));
+  const x = d3.scaleLinear().domain([0, xMax * 1.15]).nice().range([m.l, DW - m.r]);
   const y = d3.scaleBand().domain(MEASURES.map(d => d.label)).range([m.t, DH - m.b]).padding(0.4);
   svg.append("g").attr("class", "gridlines").attr("transform", `translate(0,${DH - m.b})`)
     .call(d3.axisBottom(x).ticks(4).tickSize(-(DH - m.t - m.b)).tickFormat(""));
