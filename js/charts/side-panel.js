@@ -1,6 +1,10 @@
 // Act 2 side panel: findings, income, and top allegations for the hovered/pinned precinct (or the whole city).
-import { OUTCOMES, BORO, pname } from "../config.js";
+import { OUTCOMES, BORO, FADO_LABEL, pname } from "../config.js";
+import { topAllegations } from "../data.js";
 import { pct, usd } from "../utils.js";
+
+// short tags for the CCRB's own allegation categories (full name in each row's hover title)
+const SHORT = { "Force": "force", "Abuse of Authority": "abuse", "Discourtesy": "discourtesy", "Offensive Language": "offensive lang." };
 
 export function createSidePanel(model) {
   const { alleg, stats, cityRate, cityPer10k } = model;
@@ -8,7 +12,7 @@ export function createSidePanel(model) {
 
   // citywide figures don't change, so compute them once
   const cityOutc = Object.fromEntries(OUTCOMES.map(o => [o.key, alleg.filter(a => a.outcome === o.key).length]));
-  const cityTop = d3.rollups(alleg, v => v.length, a => a.allegation).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const cityTop = topAllegations(alleg);
 
   function show(p) {
     const s = p == null ? null : stats.get(p);
@@ -30,8 +34,8 @@ export function createSidePanel(model) {
     d3.select("#side-stack").html(OUTCOMES.map(o => `<div style="width:${outc[o.key] / n * 100}%;background:var(${o.color})" title="${o.key}"></div>`).join(""));
     d3.select("#side-stack-legend").html(OUTCOMES.map(o => `<span><span class="sw" style="background:var(${o.color})"></span>${o.key} ${pct(outc[o.key] / n)}</span>`).join(""));
     const mx = top[0][1];
-    d3.select("#side-top").html(top.map(([k, v]) =>
-      `<div class="row"><span class="lbl">${k}</span><span class="val">${v.toLocaleString()}</span><div class="track"><div class="fill" style="width:${v / mx * 100}%;background:var(--text-muted)"></div></div></div>`).join(""));
+    d3.select("#side-top").html(top.map(([[k, f], v]) =>
+      `<div class="row"><span class="lbl" title="${k} (CCRB category: ${FADO_LABEL[f].toLowerCase()})">${k} <span class="cat">· ${SHORT[f]}</span></span><span class="val">${v.toLocaleString()}</span><div class="track"><div class="fill" style="width:${v / mx * 100}%;background:var(--text-muted)"></div></div></div>`).join(""));
   }
 
   return {

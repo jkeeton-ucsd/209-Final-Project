@@ -175,7 +175,7 @@
             <h4>Findings</h4>
             <div class="stackbar" id="side-stack"></div>
             <div class="legend" id="side-stack-legend"></div>
-            <h4>Most common allegations</h4>
+            <h4>Most common specific allegations</h4>
             <div class="bars" id="side-top"></div>
             <div class="side-lock">Revealed after your guess</div>
           </div>
@@ -256,6 +256,7 @@
       <svg id="mix" role="img" aria-label="Stacked bars comparing the mix of complaint types for two quarters of precincts, with expected and actual substantiation rates"></svg>
       <div class="legend" id="mix-legend"></div>
       <p class="fig-sub" style="margin-top:8px"><span id="mix-note"></span> “Expected” applies the citywide upheld rate for each type to the group's mix.</p>
+      <p class="fig-sub">Types are the CCRB's own categories. Abuse of authority spans dozens of specific allegations (stops, searches, frisks, entering premises…), so as a category it outnumbers force, even though physical force is the most common single allegation in most precincts.</p>
     </div>
 
     <div class="prose">
@@ -292,6 +293,7 @@
       <ul class="notes">
         <li><strong>Source:</strong> <a href="https://projects.propublica.org/nypd-ccrb/">ProPublica's release of NYC CCRB records</a> (Sept 1985 - Jan 2020). Precinct boundaries come from <a href="https://data.cityofnewyork.us/d/y76i-bdw7">NYC Open Data</a>. This story uses complaints received from 2000 to 2019, because earlier years are sparse.</li>
         <li><strong>This is not every complaint.</strong> The release only covers officers who were still on the force in 2020 and had at least one substantiated allegation. That pushes the substantiation rates here above the board's true overall rate, so compare precincts with each other, not with outside figures.</li>
+        <li><strong>Allegation types:</strong> the CCRB files every allegation under one of four categories: force, abuse of authority, discourtesy, or offensive language. Those categories and the specific allegations within them (physical force, stop, frisk, and so on) come straight from the source data. The one grouping we added: offensive language is combined with discourtesy in the filters and type comparisons, because it is a small share of allegations (about 2%).</li>
         <li><strong>Units:</strong> a complaint can include several allegations against several officers. The first section counts complaints; the later sections count allegations, since the board rules on each one separately.</li>
         <li><strong>Location and time:</strong> the data only records the precinct and the month received, so complaints are added up by precinct and month.</li>
         <li><strong>Income and population</strong> come from the Census Bureau's <a href="https://censusreporter.org/tables/B19001/">American Community Survey, 2020-2024 5-year estimates</a> (tables B19001 and B01003). Census tracts don't line up with precincts, so each tract is assigned to the precinct that contains its center point. The median is estimated from combined income brackets, top-coded at $200k. These figures postdate the complaints, and some neighborhoods have gentrified since, so treat income as a rough, present-day picture.</li>

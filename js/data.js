@@ -12,6 +12,13 @@ export async function loadData() {
   return { geo, rows, incomeRows };
 }
 
+/**
+ * Five most common specific allegations, as [[allegation, category], count]. Keyed by both because the source
+ * reuses some names (e.g. "Other") across categories; the category is the CCRB's own fado_type, not ours.
+ */
+export const topAllegations = as => d3.rollups(as, v => v.length, a => a.allegation + "	" + a.fado)
+  .map(([k, n]) => [k.split("	"), n]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
 export function buildModel({ geo, rows, incomeRows }) {
   const precinctIds = new Set(geo.features.map(f => +f.properties.precinct));
 
@@ -58,7 +65,7 @@ export function buildModel({ geo, rows, incomeRows }) {
       // per type: allegations and how many were upheld (pooled into group rates for Act 3)
       typeN: Object.fromEntries(Object.entries(TYPES).map(([k, fs]) => [k, as.filter(a => fs.includes(a.fado)).length])),
       typeUp: Object.fromEntries(Object.entries(TYPES).map(([k, fs]) => [k, upheld(as.filter(a => fs.includes(a.fado)))])),
-      top: d3.rollups(as, v => v.length, a => a.allegation).sort((a, b) => b[1] - a[1]).slice(0, 5),
+      top: topAllegations(as),
       expected: d3.mean(as, a => fadoRates.get(a.fado)),
     });
   }
