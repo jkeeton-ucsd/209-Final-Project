@@ -136,7 +136,7 @@ export function createTrendLines({ el, tipNote, onScrub, onPinsChange = () => {}
       exit => exit.transition("mark").duration(Math.min(dur, 300)).style("opacity", 0).remove()
     ).call(g => {
       g.attr("class", d => `trend-mark ${role(d.p)}`);
-      g.select("text").text(d => d.p === "city" ? `City average ${d.v.toFixed(1)}`
+      g.select("text").text(d => d.p === "city" ? `City, same window ${d.v.toFixed(1)}`
         : `${hoodName(d.p)}${COMMERCIAL.has(d.p) ? "*" : ""}${d.p === home ? " (you)" : ""} ${d.v.toFixed(1)}`);
       const t = g.transition("mark").duration(dur).ease(d3.easeLinear)
         .attr("transform", `translate(${cx},0)`).style("opacity", 1);
@@ -169,7 +169,7 @@ export function createTrendLines({ el, tipNote, onScrub, onPinsChange = () => {}
     d3.select("#trend-legend").html(
       (opts.topN ? `<span><span class="sw line" style="background:var(--pulse)"></span>${opts.topN} highest in ${fmtShort(kdate(cursor))}${scope ? ` (${scope})` : ""}</span>` : "") +
       (opts.pins.size || opts.home != null ? `<span><span class="sw line" style="background:var(--pin)"></span>${[opts.home != null && "Your neighborhood", opts.pins.size && "pinned"].filter(Boolean).join(" and ").replace(/^p/, "P")}</span>` : "") +
-      `<span><span class="sw line dashed"></span>City average</span>` +
+      `<span><span class="sw line dashed"></span>City average over the same window</span>` +
       `<span><span class="sw line" style="background:var(--text-muted);opacity:.45"></span>Other precincts</span>` +
       (items.some(d => COMMERCIAL.has(d.p)) ? `<span>* Commercial district: few residents but many workers and visitors, so its rate is inflated</span>` : ""));
   }

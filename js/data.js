@@ -1,7 +1,7 @@
 // Loading + every derived number the charts and prose use. Charts read from the returned `model`;
 // nothing here touches the DOM.
 import { FADO, OUTCOMES, YEARS, MIN_N, MIN_POP, COMMERCIAL, BORO } from "./config.js";
-import { corr } from "./utils.js";
+import { corr, ranks } from "./utils.js";
 
 export async function loadData() {
   const [geo, rows, incomeRows] = await Promise.all([
@@ -87,12 +87,17 @@ export function buildModel({ geo, rows, incomeRows }) {
     per10k: d3.sum(grp, s => s.complaints) / d3.sum(grp, s => s.pop) * 10000 / YEARS,
     // substantiation rate within each complaint type, pooled across the group's allegations of that type
     up: Object.fromEntries(Object.keys(TYPES).map(k => [k, d3.sum(grp, s => s.typeUp[k]) / d3.sum(grp, s => s.typeN[k])])),
+    // mix of complaint types: share of the group's allegations of each type
+    mix: Object.fromEntries(Object.keys(TYPES).map(k => [k, d3.sum(grp, s => s.typeN[k]) / d3.sum(grp, s => s.n)])),
     incLo: d3.min(grp, s => s.income), incHi: d3.max(grp, s => s.income), size: grp.length,
   });
   // two ways to split precincts into quarters: by complaint volume, and by median income
   const G = { busy: summarize(byVol.slice(0, q)), quiet: summarize(byVol.slice(-q)) };
   const byInc = [...reliable].sort((a, b) => a.income - b.income);
   const GI = { poor: summarize(byInc.slice(0, q)), rich: summarize(byInc.slice(-q)) };
+  // and by the outcome itself, to test whether the precincts upheld least simply file a harder mix of complaints
+  const byRate = [...reliable].sort((a, b) => a.rate - b.rate);
+  const GR = { low: summarize(byRate.slice(0, q)), high: summarize(byRate.slice(-q)) };
   const rVol = corr(reliable.map(s => Math.log10(s.complaints)), reliable.map(s => s.rate));
 
   // ---- headline numbers ----
@@ -111,10 +116,16 @@ export function buildModel({ geo, rows, incomeRows }) {
   // substantiation-rate ranking among precincts with enough allegations to rate
   const rated = [...stats.values()].filter(s => s.n >= MIN_N).sort((a, b) => b.rate - a.rate);
   const rateRank = new Map(rated.map((s, i) => [s.p, i + 1]));
+  // The bridge between Acts 1 and 2: residential precincts with enough allegations to rate, ranked by complaints
+  // per resident. The 10 at each end are the groups the Act 2 reveal and rank-flip chart follow.
+  const perRated = byPer.filter(s => s.n >= MIN_N);
+  const perTop = perRated.slice(0, 10), perBottom = perRated.slice(-10);
+  const rhoPer = corr(ranks(perRated.map(s => s.per10k)), ranks(perRated.map(s => s.rate)));   // Spearman
 
   return {
     geo, precinctIds, alleg, complaints, cityRate, cityUp, fadoRates, stats, POP, hasPop,
-    reliable, byVol, q, G, GI, rVol, totalComplaints, top10, top10Share,
+    reliable, byVol, q, G, GI, GR, rVol, totalComplaints, top10, top10Share,
     byPer, topPer, topPerRatio, topPerBoros, cityPer10k, perRank, rated, rateRank,
+    perRated, perTop, perBottom, rhoPer,
   };
 }

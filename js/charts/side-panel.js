@@ -1,15 +1,14 @@
 // Act 2 side panel: findings, income, and top allegations for the hovered/pinned precinct (or the whole city).
-import { OUTCOMES, BORO, YEARS, pname } from "../config.js";
+import { OUTCOMES, BORO, pname } from "../config.js";
 import { pct, usd } from "../utils.js";
 
 export function createSidePanel(model) {
-  const { alleg, stats, cityRate, totalComplaints } = model;
+  const { alleg, stats, cityRate, cityPer10k } = model;
   let pinned = null;
 
   // citywide figures don't change, so compute them once
   const cityOutc = Object.fromEntries(OUTCOMES.map(o => [o.key, alleg.filter(a => a.outcome === o.key).length]));
   const cityTop = d3.rollups(alleg, v => v.length, a => a.allegation).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const cityPer10k = totalComplaints / d3.sum([...stats.values()], s => s.pop || 0) * 10000 / YEARS;
 
   function show(p) {
     const s = p == null ? null : stats.get(p);

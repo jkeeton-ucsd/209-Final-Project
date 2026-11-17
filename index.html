@@ -60,7 +60,8 @@
 
   <div class="prose">
     <p class="lede">Any individual who believes a New York City police officer abused their authority, used excessive force, or treated them with discourtesy can file a complaint with the <strong>Civilian Complaint Review Board</strong>, an independent civilian oversight body that reviews each allegation.</p>
-    <p>Between 2000 and 2019, ProPublica collected <strong id="h-total">—</strong> complaints on officers still on the force in 2020. Complaints did not come evenly from across the city.</p>
+    <p>Between 2000 and 2019, ProPublica collected <strong id="h-total">—</strong> complaints on officers still on the force in 2020. 
+    Complaints aren't evenly distributed across the city and neither is the board's response. Where people complain most, often in lower-income neighborhoods, their complaints are least likely to be upheld.</p>
   </div>
 
   <!-- ============ WHERE (and) ============ -->
@@ -69,7 +70,7 @@
       <p class="section-kicker">Where complaints come from</p>
       <h2>A few neighborhoods file far more than others</h2>
       <p>Measured per resident, so an area can't rank higher just by being larger, the 10 neighborhoods with the most complaints filed <strong id="h-ratio">—</strong> as many complaints per resident as the rest of the city. <span id="h-boros">—</span>.</p>
-      <p>Press play to display complaints per resident over time. The map shades each precinct by complaints per resident over the five years up to the month. Beside the map, lines will be trced tracking the complaints per resident for the top neighborhoods. You 
+      <p>Press play to display complaints per resident over time. The map shades each precinct by complaints per resident over the five years up to the month. Beside the map, lines will be traced tracking the complaints per resident for the top neighborhoods. You 
         may also pin a neighborhood or precinct to follow it over time.
       </p>
       <p id="you-act1" class="you-line" style="display:none"></p>
@@ -146,15 +147,22 @@
       <div class="grid-2">
         <div>
           <div class="guess-prompt" id="guess-prompt">
+            <p class="guess-kicker">This is the map from the first section: complaints per resident, 2000–2019. Darker means more.</p>
             <p><b>Which precinct do you think had its complaints upheld most often?</b> Click it on the map.</p>
             <button id="guess-skip" class="link-btn">Skip and show me</button>
           </div>
           <div id="m2-head" style="display:none">
             <h3 class="fig-title" id="m2-title">Substantiation rate vs. city average, by precinct</h3>
             <p class="fig-sub" id="m2-sub"></p>
-            <div class="controls seg" id="m2-mode" role="group" aria-label="Map measure"></div>
+            <div class="controls">
+              <div class="controls seg" id="m2-mode" role="group" aria-label="Map measure"></div>
+              <button id="m2-replay" class="link-btn" style="display:none">Replay the transition</button>
+            </div>
           </div>
-          <svg id="map2" role="img" aria-label="Map of substantiation rate by precinct relative to city average"></svg>
+          <div class="map-wrap">
+            <div class="stage" id="m2-stage" role="group" aria-label="Transition steps"></div>
+            <svg id="map2" role="img" aria-label="Map of NYC precincts, first shaded by complaints per resident, then by substantiation rate relative to the city average"></svg>
+          </div>
           <div class="legend" id="legend2"></div>
         </div>
         <div>
@@ -175,8 +183,19 @@
       </div>
     </div>
 
+    <div class="figure" id="flip-fig" style="display:none">
+      <h3 class="fig-title">Most complaints, fewest upheld</h3>
+      <p class="fig-sub">Each line is a neighborhood, running from its rank on complaints per resident to its rank on share of allegations upheld, 2000–2019. Residential precincts with at least 100 allegations. Hover a line to find it on the map.</p>
+      <svg id="flip" role="img" aria-label="Slope chart linking each precinct's rank on complaints per resident to its rank on substantiation rate"></svg>
+      <div class="legend">
+        <span><span class="sw round" style="background:var(--text-primary)"></span>10 most complaints per resident</span>
+        <span><span class="sw round" style="background:var(--surface-1);box-shadow:inset 0 0 0 1.5px var(--text-primary)"></span>10 fewest</span>
+        <span><span class="sw" style="background:var(--div-lo);opacity:.18"></span>Below the city average share upheld</span>
+      </div>
+      <p class="fig-sub" id="flip-note" style="margin-top:8px"></p>
+    </div>
+
     <div class="prose">
-      <p>Switch the map to <strong>per resident</strong> to see how many allegations each neighborhood is left with. <span id="m2-note"></span></p>
       <p>Part of what decides an outcome is the kind of complaint. Force, the most serious, is the hardest to prove: most force allegations end with the officer cleared or the case unresolved.</p>
     </div>
 
@@ -199,7 +218,7 @@
     <div class="prose">
       <p class="section-kicker">Why it might be</p>
       <h2>The busier the precinct, the lower the odds</h2>
-      <p>You might expect the opposite. If a precinct draws far more complaints, there would seem to be more misconduct to find. Instead, each additional complaint is <em>less</em> likely to be upheld (<strong id="r-val">—</strong>). Switch the x-axis to check that this isn't just bigger precincts having more people, and to see how it lines up with income.</p>
+      <p>You might expect the opposite. If a precinct draws far more complaints, there would seem to be more misconduct to find. Instead, precincts with more complaints have<em>lower</em> substantiation rates (<strong id="r-val">—</strong>). Switch the x-axis to check that this isn't just bigger precincts having more people, and to see how it lines up with income.</p>
       <p id="callback">Earlier you saw that force is the hardest complaint to prove everywhere. Split those same rulings by precinct, and the gap shows up within every type of complaint.</p>
     </div>
 
@@ -224,6 +243,19 @@
           <p class="fig-sub" id="db-note" style="margin-top:8px"></p>
         </div>
       </div>
+    </div>
+
+    <div class="prose">
+      <p>One possible explanation: the precincts with the fewest complaints upheld might simply file a harder mix of complaints, with more force allegations, which are the hardest to prove. Group precincts by how often their complaints are upheld and compare what they file.</p>
+    </div>
+
+    <div class="figure">
+      <h3 class="fig-title">Same mix of complaints, different outcomes</h3>
+      <p class="fig-sub" id="mix-sub"></p>
+      <div class="controls seg" id="mix-mode" role="group" aria-label="Group precincts by"></div>
+      <svg id="mix" role="img" aria-label="Stacked bars comparing the mix of complaint types for two quarters of precincts, with expected and actual substantiation rates"></svg>
+      <div class="legend" id="mix-legend"></div>
+      <p class="fig-sub" style="margin-top:8px"><span id="mix-note"></span> “Expected” applies the citywide upheld rate for each type to the group's mix.</p>
     </div>
 
     <div class="prose">

@@ -12,7 +12,7 @@ import { onHome } from "../ui/home.js";
 const fold = f => f === "Offensive Language" ? "Discourtesy" : f;   // filter chips treat these as one category
 
 export function initWhereMap(model, base) {
-  const { complaints, precinctIds, POP, hasPop } = model;
+  const { complaints, precinctIds, POP, hasPop, cityPer10k } = model;
   const PIDS = [...precinctIds];
   const state = {
     cats: new Set(["Abuse of Authority", "Force", "Discourtesy"]),
@@ -75,7 +75,9 @@ export function initWhereMap(model, base) {
 
   /** Every precinct's rate for every month, for the trend lines. Rebuilt when the filter or window changes. */
   let series = [], cityVals = [];
-  const RES = PIDS.filter(hasPop), resPop = d3.sum(RES, p => POP.get(p));
+  // city line: residential precincts, leaving out the commercial districts, the same definition as the 20-year
+  // city average quoted in the prose (model.cityPer10k)
+  const RES = PIDS.filter(p => hasPop(p) && !COMMERCIAL.has(p)), resPop = d3.sum(RES, p => POP.get(p));
   function buildSeries() {
     series = PIDS.map(p => ({ p, vals: [] }));
     cityVals = [];
@@ -133,8 +135,11 @@ export function initWhereMap(model, base) {
       return fill(valOf.get(p) || 0);
     });
 
-    // label the current leaders (top 5 prominent, the rest smaller), as many as fit
-    base.placeLabels(labels, ranked.slice(0, 16).map((d, i) => ({ p: d.p, text: HOOD[d.p], minor: i >= 5 })), 14);
+    // label the 10 highest residential neighborhoods in this window (top 5 prominent), matching the "10 neighborhoods"
+    // in the prose; commercial districts are left out there too, since their per-resident rates are inflated.
+    // Only these 10 are offered, so a label hidden by a collision is never replaced by the 11th-ranked precinct.
+    const leaders = ranked.filter(d => !COMMERCIAL.has(d.p)).slice(0, 10);
+    base.placeLabels(labels, leaders.map((d, i) => ({ p: d.p, text: HOOD[d.p], minor: i >= 5 })));
 
     // story beats: caption + outline the precinct involved while the cursor is inside the event window
     const ev = EVENTS.find(e => state.cursor >= e.k && state.cursor < e.k + e.span);
@@ -146,13 +151,14 @@ export function initWhereMap(model, base) {
     d3.select("#clock-count").text(`${total.toLocaleString()} complaints, ${winLabel(state.cursor)}`);
     d3.select("#legend1").html(
       `<span>${M.legend}: 0<span class="ramp" style="background:linear-gradient(to right,var(--share-lo),var(--share-hi))"></span>${M.fmt(vmax)}+</span>` +
-      `<span><span class="sw" style="background:var(--nodata);border:1px solid var(--border)"></span>Almost no residents (Central Park)</span>`
+      `<span><span class="sw" style="background:var(--nodata);border:1px solid var(--border)"></span>Almost no residents (Central Park)</span>` +
+      `<span>Labeled: the 10 highest neighborhoods in this window, not counting Midtown and Lower Manhattan, where few people live</span>`
     );
 
     trend.render({ cursor: state.cursor, dur });
     d3.select("#trend-sub").text(state.window
-      ? `Complaints per 10,000 residents per year, over the ${state.window / 12} years before each month`
-      : "Complaints per 10,000 residents per year, running total since 2000");
+      ? `Complaints per 10,000 residents per year, over the ${state.window / 12} years before each month · 2000–2019 city average: ${cityPer10k.toFixed(1)}`
+      : `Complaints per 10,000 residents per year, running total since 2000 · 2000–2019 city average: ${cityPer10k.toFixed(1)}`);
     timeline.move(state.cursor, winStart(state.cursor));
   }
 

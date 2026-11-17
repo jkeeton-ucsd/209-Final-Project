@@ -22,3 +22,10 @@ export function corr(xs, ys) {
   const num = d3.sum(xs, (x, i) => (x - mx) * (ys[i] - my));
   return num / Math.sqrt(d3.sum(xs, x => (x - mx) ** 2) * d3.sum(ys, y => (y - my) ** 2));
 }
+
+/** Rank of each value (0 = smallest), for rank correlations. */
+export const ranks = xs => {
+  const r = [];
+  d3.range(xs.length).sort((a, b) => xs[a] - xs[b]).forEach((i, k) => { r[i] = k; });
+  return r;
+};
