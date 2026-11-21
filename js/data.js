@@ -124,7 +124,7 @@ export function buildModel({ geo, rows, incomeRows }) {
   const rated = [...stats.values()].filter(s => s.n >= MIN_N).sort((a, b) => b.rate - a.rate);
   const rateRank = new Map(rated.map((s, i) => [s.p, i + 1]));
   // The bridge between Acts 1 and 2: residential precincts with enough allegations to rate, ranked by complaints
-  // per resident. The 10 at each end are the groups the Act 2 reveal and rank-flip chart follow.
+  // per resident. The 10 at each end are the groups the Act 2 reveal follows.
   const perRated = byPer.filter(s => s.n >= MIN_N);
   const perTop = perRated.slice(0, 10), perBottom = perRated.slice(-10);
   const rhoPer = corr(ranks(perRated.map(s => s.per10k)), ranks(perRated.map(s => s.rate)));   // Spearman

@@ -152,7 +152,7 @@ export function initWhereMap(model, base) {
     d3.select("#legend1").html(
       `<span>${M.legend}: 0<span class="ramp" style="background:linear-gradient(to right,var(--share-lo),var(--share-hi))"></span>${M.fmt(vmax)}+</span>` +
       `<span><span class="sw" style="background:var(--nodata);border:1px solid var(--border)"></span>Almost no residents (Central Park)</span>` +
-      `<span>Labeled: the 10 highest neighborhoods in this window, not counting Midtown and Lower Manhattan, where few people live</span>`
+      `<span>Labeled: the 10 highest reporting neighborhoods in this window, not counting Midtown and Lower Manhattan, where few people live</span>`
     );
 
     trend.render({ cursor: state.cursor, dur });
@@ -165,7 +165,7 @@ export function initWhereMap(model, base) {
   // ---------- controls ----------
   let timer = null;
   const playBtn = document.getElementById("play");
-  const speed = () => +document.getElementById("speed").value;
+  const speed = () => 300;   // ms per month of playback
   function play() {
     if (state.cursor >= K1) { state.cursor = K0; renderFrame(0); }   // replay from the start
     state.playing = true; playBtn.textContent = "Pause"; clearInterval(timer);
@@ -180,23 +180,6 @@ export function initWhereMap(model, base) {
     clearInterval(timer);
   }
   playBtn.onclick = () => state.playing ? pause() : play();
-  document.getElementById("speed").onchange = () => state.playing && play();
-
-  const chipDefs = [["Abuse of Authority", "Abuse of authority"], ["Force", "Force"], ["Discourtesy", "Discourtesy / offensive language"]];
-  const chips = d3.select("#chips").selectAll("button").data(chipDefs).join("button")
-    .attr("class", "chip").attr("aria-pressed", "true").text(d => d[1])
-    .on("click", (ev, [k]) => {
-      if (state.cats.has(k)) { if (state.cats.size > 1) state.cats.delete(k); } else state.cats.add(k);
-      chips.attr("aria-pressed", d => state.cats.has(d[0]));
-      refilter(); timeline.setData(byMonth); trend.setData(series, cityVals); renderFrame(250);
-    });
-
-  document.getElementById("window").onchange = e => {
-    state.window = +e.target.value;
-    computeVmax(); buildSeries();
-    trend.setData(series, cityVals);
-    renderFrame(0);
-  };
 
   onHighlight(p => {
     precincts.classed("hl", f => +f.properties.precinct === p);

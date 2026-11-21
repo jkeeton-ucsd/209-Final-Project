@@ -3,8 +3,7 @@
 // precinct had its complaints upheld most often. The reveal then plays in three steps:
 //   1. outline the 10 neighborhoods with the most complaints per resident (everything else dims),
 //   2. recolor the same map by substantiation rate, rippling out from the reader's pick, outlines kept,
-//   3. count how many outlined precincts landed below the city average, drop the outlines, unlock the panel and
-//      the rank-flip chart.
+//   3. count how many outlined precincts landed below the city average, drop the outlines, unlock the panel.
 // The steps autoplay; arrows on the caption let the reader step back and forth at their own pace.
 // After that the reader can flip between the two measures or replay the sequence.
 import { HOOD, COMMERCIAL, MIN_N, pname } from "../config.js";
@@ -18,7 +17,7 @@ const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "
 const name = p => HOOD[p] || `Precinct ${p}`;
 const STILL = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export function initRateMap(model, base, side, flip) {
+export function initRateMap(model, base, side) {
   const { stats, reliable, byVol, cityRate, hasPop, rated, rateRank, perRated, perTop, perBottom } = model;
   const rateable = p => (stats.get(p)?.n || 0) >= MIN_N;
 
@@ -164,14 +163,13 @@ export function initRateMap(model, base, side, flip) {
     el.append("p").attr("class", "stage-text").attr("aria-live", "polite");
   }
 
-  /** First arrival at the last step: unlock the side panel, write the result, and show the rank-flip chart. */
+  /** First arrival at the last step: unlock the side panel and write the result. */
   function unlock() {
     if (done) return;
     done = true;
     d3.select("#side").classed("locked", false);
     d3.select("#m2-replay").style("display", null);
     writeResult(guess);
-    flip.reveal(guess);
   }
 
   function reveal(p) {
@@ -197,13 +195,10 @@ export function initRateMap(model, base, side, flip) {
         ? `<p class="gr-big">You got it.</p><p><b>${name(p)}</b> had the highest substantiation rate in the city: <b>${pct(s.rate)}</b> of its allegations were upheld.</p>`
         : `<p class="gr-big">${pct(s.rate)}</p><p>of allegations in <b>${name(p)}</b> were substantiated, the <b>${ordinal(r)}</b> highest of ${rated.length} precincts. ` +
           `The highest was <b>${name(top.p)}</b>, at <b>${pct(top.rate)}</b>.</p>`);
-      if (perIdx.get(p) < perRated.length / 2 && p !== top.p)
-        lines.push(`<p>You picked one of the darker precincts, where people file more complaints per resident. That's a natural instinct: more complaints should mean more misconduct to find. The map says otherwise.</p>`);
     } else {
       lines.push(`<p>The highest substantiation rate belonged to <b>${name(top.p)}</b>, at <b>${pct(top.rate)}</b> of allegations upheld.</p>`);
     }
-    lines.push(`<p>Of the 10 neighborhoods with the most complaints per resident, <b>${busyBelow}</b> fall below the city average of ${pct(cityRate)}. ` +
-      `Of the 10 with the fewest, only <b>${quietBelow}</b> ${doDo(quietBelow)}. The chart below the map follows every neighborhood from one ranking to the other.</p>`);
+    lines.push(`<p>In many cases, the neighborhoods with the highest substantiation rates are those that complained the least and vice versa.</p>`);
     if (hs && home !== p) lines.push(hs.n >= MIN_N
       ? `<p class="you-line">Your neighborhood, <b class="you">${name(home)}</b>: <b>${pct(hs.rate)}</b> upheld, ${ordinal(rateRank.get(home))} of ${rated.length}.</p>`
       : `<p class="you-line">Your neighborhood, <b class="you">${name(home)}</b>, had too few allegations to rate.</p>`);

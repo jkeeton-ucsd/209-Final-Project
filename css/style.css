@@ -1,14 +1,17 @@
 :root {
   color-scheme: light;
-  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --sans: "Libre Franklin", "Helvetica Neue", Arial, sans-serif;
-  --surface-0: #ffffff;   /* page */
-  --surface-1: #ffffff;   /* chart surface (map strokes, dot rings) */
-  --surface-2: #f3f3f1;   /* controls, tracks, prompts */
-  --border: #dcdcd8;
-  --text-primary: #121212;
-  --text-secondary: #3d3d3b;
-  --text-muted: #6f6f6b;
+  /* type: a light Caslon display for headlines and a Caslon text face for reading (magazine feel),
+     with a condensable grotesque for labels, kickers and charts (wire-service / financial-paper feel) */
+  --display: "Libre Caslon Display", "Libre Caslon Text", Georgia, serif;
+  --serif: "Libre Caslon Text", Georgia, "Times New Roman", serif;
+  --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --surface-0: #faf8f3;   /* page: warm paper */
+  --surface-1: #faf8f3;   /* chart surface (map strokes, dot rings) */
+  --surface-2: #efebe2;   /* controls, tracks, prompts */
+  --border: #dbd5c8;
+  --text-primary: #1a1916;
+  --text-secondary: #45423c;
+  --text-muted: #6f6b63;
   /* Act 1: teal = complaints per resident (single-hue sequential ramp, light to dark);
      berry = the reader's neighborhood and pinned precincts. Pair validated for color-vision deficiency in both themes. */
   --pulse: #14a394;
@@ -29,8 +32,8 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --surface-0: #121212; --surface-1: #121212; --surface-2: #1f1f1e; --border: #363634;
-    --text-primary: #f0efec; --text-secondary: #c9c8c0; --text-muted: #8f8e86;
+    --surface-0: #161513; --surface-1: #161513; --surface-2: #23211d; --border: #3a3732;
+    --text-primary: #f2efe7; --text-secondary: #cbc6ba; --text-muted: #929087;
     --pulse: #1fa898; --share-lo: #1c2a28; --share-hi: #6fd1c3; --pin: #c02c74;
     --sub: #3987e5; --exon: #d95926; --unsub: #5f5e58;
     --div-lo: #e66767; --div-mid: #383835; --div-hi: #5598e7; --nodata: #242423; --guess: #4a4945;
@@ -38,8 +41,8 @@
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --surface-0: #121212; --surface-1: #121212; --surface-2: #1f1f1e; --border: #363634;
-  --text-primary: #f0efec; --text-secondary: #c9c8c0; --text-muted: #8f8e86;
+  --surface-0: #161513; --surface-1: #161513; --surface-2: #23211d; --border: #3a3732;
+  --text-primary: #f2efe7; --text-secondary: #cbc6ba; --text-muted: #929087;
   --pulse: #1fa898; --share-lo: #1c2a28; --share-hi: #6fd1c3; --pin: #c02c74;
   --sub: #3987e5; --exon: #d95926; --unsub: #5f5e58;
   --div-lo: #e66767; --div-mid: #383835; --div-hi: #5598e7; --nodata: #242423; --guess: #4a4945;
@@ -55,15 +58,16 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 16px 96px; }
 a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
 /* ---------- site navigation (shared by every page) ---------- */
+/* a broadsheet-style masthead: thick-over-thin double rule, small condensed caps */
 .site-nav {
   position: sticky; top: 0; z-index: 20;
-  background: var(--surface-0); border-bottom: 1px solid var(--border);
+  background: var(--surface-0); border-bottom: 4px double var(--text-primary);
 }
-.site-nav-inner { max-width: 1180px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 4px; height: 48px; }
-.site-name { font-family: var(--serif); font-weight: 700; font-size: 17px; margin-right: auto; white-space: nowrap; }
+.site-nav-inner { max-width: 1180px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 4px; height: 50px; }
+.site-name { font-family: var(--display); font-weight: 400; font-size: 21px; letter-spacing: 0.01em; margin-right: auto; white-space: nowrap; }
 .site-nav a {
-  font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none;
-  padding: 6px 10px; letter-spacing: 0.02em;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary); text-decoration: none;
+  padding: 6px 10px; letter-spacing: 0.12em; text-transform: uppercase; font-stretch: 85%;
 }
 .site-nav a:hover { color: var(--text-primary); }
 .site-nav a[aria-current="page"] { color: var(--text-primary); box-shadow: inset 0 -2px var(--text-primary); }
@@ -71,19 +75,20 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 2px; 
 
 /* ---------- article typography ---------- */
 header.hero { max-width: 860px; margin: 0 auto; padding: 72px 0 40px; text-align: center; }
+/* kickers: small condensed caps */
 .kicker, .section-kicker {
-  font-family: var(--sans); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--text-muted); font-weight: 600; margin: 0 0 14px;
+  font-family: var(--sans); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; font-stretch: 80%;
+  color: var(--text-muted); font-weight: 700; margin: 0 0 14px;
 }
 h1 {
-  font-family: var(--serif); font-weight: 700; font-size: clamp(34px, 5.6vw, 58px);
-  line-height: 1.08; letter-spacing: -0.015em; margin: 0 0 18px;
+  font-family: var(--display); font-weight: 400; font-size: clamp(38px, 6.2vw, 66px);
+  line-height: 1.04; letter-spacing: -0.01em; margin: 0 0 20px;
 }
-.deck { font-family: var(--serif); font-size: clamp(20px, 2.4vw, 24px); line-height: 1.4; color: var(--text-secondary); margin: 0 auto 28px; max-width: 640px; }
-.byline { font-size: 14px; font-weight: 700; margin: 0 0 2px; }
+.deck { font-family: var(--serif); font-style: italic; font-size: clamp(19px, 2.3vw, 23px); line-height: 1.45; color: var(--text-secondary); margin: 0 auto 30px; max-width: 620px; }
+.byline { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-stretch: 85%; margin: 0 0 4px; }
 .dateline { font-size: 13px; color: var(--text-muted); margin: 0; }
 
-.home-box { margin: 36px auto 0; padding: 18px 20px; max-width: 520px; background: var(--surface-2); border-radius: 4px; }
+.home-box { margin: 36px auto 0; padding: 18px 20px; max-width: 520px; background: var(--surface-2); border-radius: 2px; }
 .home-box label { display: block; font-weight: 600; font-size: 15px; margin-bottom: 8px; }
 .home-box select { font-size: 15px; padding: 8px 12px; min-width: 280px; max-width: 100%; background: var(--surface-0); }
 .home-note { font-size: 14px; color: var(--text-secondary); margin: 10px 0 0; }
@@ -91,12 +96,16 @@ h1 {
 .home-box.inline label { display: inline; margin: 0; }
 .you { color: var(--pin); font-weight: 700; }
 
-.prose { max-width: 640px; margin: 0 auto; font-family: var(--serif); font-size: 20px; line-height: 1.6; }
+.prose { max-width: 640px; margin: 0 auto; font-family: var(--serif); font-size: 19px; line-height: 1.7; }
 .prose p { margin: 0 0 1.1em; }
 .prose strong { font-weight: 700; }
+/* a tall display-face initial, set into about three lines */
 .lede::first-letter {
-  float: left; font-size: 3.4em; line-height: 0.82; font-weight: 700; padding: 0.08em 0.1em 0 0;
+  float: left; font-family: var(--display); font-weight: 400; font-size: 4.9em; line-height: 0.8;
+  padding: 0.06em 0.08em 0 0; margin-top: 0.02em;
 }
+/* end mark closing the story */
+.endmark::after { content: ""; display: inline-block; width: 0.55em; height: 0.55em; margin-left: 0.4em; background: var(--text-primary); vertical-align: 0.02em; }
 .you-line { font-size: 18px; border-left: 3px solid var(--pin); padding: 2px 0 2px 16px; color: var(--text-secondary); }
 .prose .you-line { font-size: 18px; }
 /* key words in the prose carry the same color as their chart encoding */
@@ -106,13 +115,13 @@ h1 {
 
 section.act { margin: 0; padding: 40px 0 8px; }
 h2 {
-  font-family: var(--serif); font-weight: 700; font-size: clamp(26px, 3.4vw, 34px);
-  line-height: 1.18; letter-spacing: -0.01em; margin: 0 0 20px;
+  font-family: var(--display); font-weight: 400; font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.12; letter-spacing: -0.005em; margin: 0 0 22px;
 }
 /* section break: a small diamond with hairlines that draw outward when it scrolls into view */
 .section-break {
   display: flex; align-items: center; justify-content: center; gap: 14px;
-  color: var(--text-muted); font-size: 11px; margin: 48px auto 8px; max-width: 640px;
+  color: var(--text-muted); font-size: 11px; margin: 56px auto 8px; max-width: 640px;
 }
 .section-break::before, .section-break::after { content: ""; height: 1px; width: 120px; background: var(--border); }
 .section-break::before { transform-origin: right center; }
@@ -136,9 +145,10 @@ h2 {
 @media (prefers-reduced-motion: reduce) { .reveal-on .reveal { opacity: 1; transform: none; transition: none; } }
 
 /* figures break out of the reading column */
-.figure { max-width: 900px; margin: 28px auto 44px; }
+/* each figure hangs from a hairline rule, chart-desk style */
+.figure { max-width: 900px; margin: 32px auto 48px; padding-top: 14px; border-top: 1px solid var(--text-primary); }
 .figure.wide { max-width: 1180px; }
-h3.fig-title { font-family: var(--sans); font-size: 15px; font-weight: 700; margin: 0 0 2px; }
+h3.fig-title { font-family: var(--sans); font-size: 16px; font-weight: 700; letter-spacing: -0.005em; margin: 0 0 2px; }
 .fig-sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 12px; }
 
 .card { background: none; border: 0; padding: 0; }
@@ -153,7 +163,7 @@ h3.fig-title { font-family: var(--sans); font-size: 15px; font-weight: 700; marg
 .callout p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text-secondary); }
 
 .takeaway h2 { font-size: clamp(28px, 3.8vw, 38px); }
-.about { padding-top: 56px; margin-top: 48px; border-top: 1px solid var(--border); }
+.about { padding-top: 56px; margin-top: 56px; border-top: 4px double var(--text-primary); }
 
 /* ---------- controls ---------- */
 .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 14px; }
@@ -259,7 +269,7 @@ svg { display: block; width: 100%; height: auto; overflow: visible; font-family:
 
 .tooltip {
   position: fixed; pointer-events: none; z-index: 10; background: var(--surface-0); color: var(--text-primary);
-  border: 1px solid var(--border); border-radius: 3px; padding: 8px 10px; font-size: 13px; line-height: 1.45;
+  border: 1px solid var(--border); border-top: 3px solid var(--text-primary); border-radius: 0; padding: 8px 10px; font-size: 13px; line-height: 1.45;
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.12); opacity: 0; transition: opacity 0.1s; max-width: 260px;
 }
 .tooltip .muted { color: var(--text-secondary); }
@@ -311,7 +321,7 @@ p.notes { padding-left: 0; }
 .db-city { stroke: var(--text-muted); stroke-width: 1.5; }
 .sw.tick { width: 2px; height: 12px; border-radius: 0; background: var(--text-muted); margin: 0 8px 0 4px; vertical-align: -2px; }
 
-/* ---------- Act 2: reveal sequence + rank flip ---------- */
+/* ---------- Act 2: reveal sequence ---------- */
 .guess-kicker { font-size: 14px !important; color: var(--text-secondary); }
 .sw.outline { background: transparent; box-shadow: inset 0 0 0 2px var(--text-primary); }
 .k-lo { box-shadow: inset 0 -0.22em var(--div-lo); }
@@ -333,31 +343,6 @@ p.notes { padding-left: 0; }
 @keyframes stage-hold { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (max-width: 600px) { .stage { position: static; max-width: none; margin-bottom: 8px; } }
 
-#flip { width: 100%; max-width: 760px; display: block; margin: 0 auto; }
-.flip-head { font-size: 13px; font-weight: 600; fill: var(--text-primary); }
-.flip-head-sub { font-size: 11px; font-weight: 400; fill: var(--text-muted); }
-.flip-below { fill: var(--div-lo); opacity: 0.1; }
-.flip-avg { stroke: var(--div-lo); stroke-width: 1.2; stroke-dasharray: 4 3; }
-.flip-below-label { fill: var(--div-lo); font-weight: 600; }
-.flip-bracket path { fill: none; stroke: var(--text-muted); }
-.flip-bracket text { font-size: 12px; fill: var(--text-secondary); }
-.flip-bracket.top text { font-weight: 600; fill: var(--text-primary); }
-.flip-count { font-size: 13px; font-weight: 600; fill: var(--text-primary); }
-.flip-count.bot { font-weight: 500; fill: var(--text-secondary); }
-.flip-line { stroke: var(--border); stroke-width: 1; }
-.flip-dot { r: 2; fill: var(--border); }
-.flip-row.top .flip-line { stroke: var(--text-primary); stroke-width: 2; }
-.flip-row.top .flip-dot { r: 4; fill: var(--text-primary); }
-.flip-row.bot .flip-line { stroke: var(--text-muted); stroke-width: 1.6; }
-.flip-row.bot .flip-dot { r: 4; fill: var(--surface-1); stroke: var(--text-primary); stroke-width: 1.5; }
-.flip-name { display: none; font-size: 12px; font-weight: 600; fill: var(--text-primary); paint-order: stroke; stroke: var(--surface-1); stroke-width: 3px; }
-.flip-hit { stroke: transparent; stroke-width: 9; cursor: pointer; }
-#flip .flip-row, .flip-line { transition: opacity 0.2s; }
-#flip.focus .flip-row:not(.hl):not(.home) { opacity: 0.25; }
-.flip-row.hl .flip-name, .flip-row.home .flip-name { display: block; }
-.flip-row.hl .flip-line { stroke: var(--text-primary); stroke-width: 3; }
-.flip-row.home .flip-line { stroke: var(--pin); stroke-width: 2.5; }
-.flip-row.home .flip-dot { fill: var(--pin); stroke: var(--pin); r: 4; }
 
 /* ---------- Act 3: complaint mix ---------- */
 /* one neutral ramp for complaint type, so it can't be mistaken for the outcome or above/below-average colors;

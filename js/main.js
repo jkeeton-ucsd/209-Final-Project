@@ -7,7 +7,6 @@ import { initWhereMap } from "./charts/where-map.js";
 import { initOutcomes } from "./charts/outcomes.js";
 import { createSidePanel } from "./charts/side-panel.js";
 import { initRateMap } from "./charts/rate-map.js";
-import { initRankFlip } from "./charts/rank-flip.js";
 import { initScatter } from "./charts/scatter.js";
 import { initDumbbell } from "./charts/dumbbell.js";
 import { initMix } from "./charts/mix.js";
@@ -30,12 +29,10 @@ async function main() {
 
   const base = createMapBase(model.geo);       // shared projection + labels for both maps
   const side = createSidePanel(model);         // shared by the Act 2 map and the Act 3 scatter
-  const flip = initRankFlip(model);            // Act 2c, revealed by the Act 2 map's guess sequence
   const charts = {
     where: initWhereMap(model, base),          // Act 1
     outcomes: initOutcomes(model),             // Act 2a
-    rateMap: initRateMap(model, base, side, flip),   // Act 2b
-    flip,
+    rateMap: initRateMap(model, base, side),   // Act 2b
     scatter: initScatter(model, side),         // Act 3a
     dumbbell: initDumbbell(model),             // Act 3b
     mix: initMix(model),                       // Act 3c

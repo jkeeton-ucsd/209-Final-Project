@@ -1,6 +1,6 @@
 // Act 1 trend chart: every precinct's complaints-per-resident rate over time as a faint line. A focus panel
-// picks which lines stand out: the top N at the cursor (optionally within one borough, optionally skipping
-// commercial districts), plus any precincts the reader pins by search or by clicking the map. Lines draw in
+// picks which lines stand out: the top N at the cursor (commercial districts skipped, 12-month smoothing),
+// plus any precincts the reader pins by search or by clicking the map. Lines draw in
 // up to the playback cursor, so a change in the lead shows up as a crossing rather than a row jumping places.
 import { START, END, K0, HOOD, COMMERCIAL, BORO, pname } from "../config.js";
 import { kdate, mkey, fmtShort } from "../utils.js";
@@ -10,7 +10,6 @@ import { highlight } from "../ui/highlight.js";
 // Shared with the timeline below it so the two x-axes (and cursors) line up exactly.
 export const TREND_W = 620, TREND_M = { l: 30, r: 132 };
 
-const BOROS = ["All", "Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"];
 const TOP_OPTS = [[0, "None"], [3, "Top 3"], [5, "Top 5"], [10, "Top 10"]];
 const hoodName = p => HOOD[p] || `Precinct ${p}`;
 
@@ -198,16 +197,6 @@ export function createTrendLines({ el, tipNote, onScrub, onPinsChange = () => {}
   const topBtns = d3.select("#trend-top").selectAll("button").data(TOP_OPTS).join("button")
     .text(d => d[1]).attr("aria-pressed", d => d[0] === opts.topN)
     .on("click", (ev, [n]) => { opts.topN = n; topBtns.attr("aria-pressed", d => d[0] === n); redraw(); });
-
-  d3.select("#trend-boro").selectAll("option").data(BOROS).join("option")
-    .attr("value", d => d).text(d => d === "All" ? "All boroughs" : d);
-  d3.select("#trend-boro").on("change", ev => { opts.boro = ev.target.value; redraw(); });
-
-  d3.select("#trend-smooth").property("value", opts.smooth)
-    .on("change", ev => { opts.smooth = +ev.target.value; rebuild(); redraw(); });
-
-  d3.select("#trend-commercial").property("checked", opts.skipCommercial)
-    .on("change", ev => { opts.skipCommercial = ev.target.checked; redraw(); });
 
   // search: a datalist of "Neighborhood (precinct)" entries; also accepts a bare precinct number or a partial name
   const optionText = p => `${hoodName(p)} (${p})`;
