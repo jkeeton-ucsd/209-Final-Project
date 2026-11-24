@@ -32,7 +32,6 @@ js/
     map-base.js         shared projection, path, and label placement for both maps
     where-map.js        Act 1 map: sliding window, share / per resident, playback controls
     timeline.js         Act 1 timeline under the map
-    ranking.js          Act 1 animated top-10 list
     outcomes.js         Act 2 findings by allegation type (stacked bars)
     rate-map.js         Act 2 map: substantiation rate, upheld / not upheld per resident
     side-panel.js       Act 2 precinct detail panel (also used by the Act 3 scatter)
