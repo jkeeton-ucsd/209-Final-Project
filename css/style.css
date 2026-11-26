@@ -358,13 +358,3 @@ p.notes { padding-left: 0; }
 .mix-val { font-size: 18px; font-weight: 700; fill: var(--text-primary); font-variant-numeric: tabular-nums; }
 .mix-val.muted { font-weight: 500; fill: var(--text-secondary); }
 #mix { width: 100%; display: block; }
-
-/* ---------- TEMPORARY: initial prototype write-up (remove with the aside in index.html) ---------- */
-.prototype-note {
-  max-width: 640px; margin: 8px auto 48px; padding: 24px 28px;
-  border: 1px dashed var(--border); border-radius: 4px; background: var(--surface-2);
-}
-.prototype-note h2 { font-size: 24px; margin-bottom: 12px; }
-.prototype-note h3 { font-size: 15px; font-weight: 700; margin: 18px 0 6px; }
-.prototype-note ul { margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.55; color: var(--text-secondary); }
-.prototype-note li { margin-bottom: 6px; }
