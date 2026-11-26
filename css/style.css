@@ -361,3 +361,9 @@ p.notes { padding-left: 0; }
 }
 .demo-help.on { display: block; }
 .demo-nocursor, .demo-nocursor * { cursor: none !important; }
+
+/* ---------- video walkthrough ---------- */
+.video-section { scroll-margin-top: 64px; }   /* clear the sticky masthead when jumped to from the byline link */
+.video-embed { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); }
+.video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-caption { margin-top: 10px; }
