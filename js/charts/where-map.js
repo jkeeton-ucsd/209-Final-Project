@@ -18,6 +18,7 @@ export function initWhereMap(model, base) {
     cats: new Set(["Abuse of Authority", "Force", "Discourtesy"]),
     cursor: K1, playing: false,
     window: 60,   // months; 0 = running total from Jan 2000
+    speed: 300,   // ms per month of playback (demo mode speeds this up)
   };
 
   // ---------- windowing ----------
@@ -165,7 +166,7 @@ export function initWhereMap(model, base) {
   // ---------- controls ----------
   let timer = null;
   const playBtn = document.getElementById("play");
-  const speed = () => 300;   // ms per month of playback
+  const speed = () => state.speed;
   function play() {
     if (state.cursor >= K1) { state.cursor = K0; renderFrame(0); }   // replay from the start
     state.playing = true; playBtn.textContent = "Pause"; clearInterval(timer);

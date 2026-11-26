@@ -12,6 +12,7 @@ import { initDumbbell } from "./charts/dumbbell.js";
 import { initMix } from "./charts/mix.js";
 import { initHomePickers } from "./ui/home.js";
 import { initReveal } from "./ui/reveal.js";
+import { initDemo } from "./ui/demo.js";
 
 async function main() {
   initReveal();   // before the data loads, so the opening text eases in right away
@@ -45,7 +46,9 @@ async function main() {
   };
   renderAll();
   // the reader's neighborhood: any precinct with residents (restores a saved choice, which redraws the charts)
-  initHomePickers([...model.stats.values()].filter(s => model.hasPop(s.p)).map(s => s.p));
+  const homes = [...model.stats.values()].filter(s => model.hasPop(s.p)).map(s => s.p);
+  initHomePickers(homes);
+  initDemo(charts, homes);   // only with ?demo in the URL, for recording the video
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
 
   status.textContent = `${model.alleg.length.toLocaleString()} allegations in ${model.totalComplaints.toLocaleString()} complaints, 2000–2019. ` +

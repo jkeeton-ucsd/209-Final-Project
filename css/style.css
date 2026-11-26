@@ -348,3 +348,16 @@ p.notes { padding-left: 0; }
 .mix-val { font-size: 18px; font-weight: 700; fill: var(--text-primary); font-variant-numeric: tabular-nums; }
 .mix-val.muted { font-weight: 500; fill: var(--text-secondary); }
 #mix { width: 100%; display: block; }
+
+/* ---------- demo mode (js/ui/demo.js, only with ?demo in the URL) ---------- */
+.demo-spot {
+  position: fixed; z-index: 30; pointer-events: none; border-radius: 4px;
+  box-shadow: 0 0 0 200vmax rgba(10, 9, 8, 0.55); opacity: 0; transition: opacity 0.5s;
+}
+.demo-spot.on { opacity: 1; }
+.demo-help {
+  position: fixed; right: 16px; bottom: 16px; z-index: 40; display: none;
+  font: 13px/1.6 var(--sans); background: var(--text-primary); color: var(--surface-0); padding: 10px 14px; border-radius: 4px;
+}
+.demo-help.on { display: block; }
+.demo-nocursor, .demo-nocursor * { cursor: none !important; }
